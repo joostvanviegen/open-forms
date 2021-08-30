@@ -28,7 +28,7 @@ class PluginListView(ListMixin, APIView):
     serializer_class = AuthPluginSerializer
 
     def get_objects(self):
-        return list(register)
+        return [plugin for plugin in register if plugin.is_enabled]
 
 
 class AuthenticationLogoutView(APIView):
