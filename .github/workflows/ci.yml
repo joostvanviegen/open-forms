@@ -77,7 +77,14 @@ jobs:
 
       - name: Generate OAS
         run: |
+          python src/manage.py migrate
           python src/manage.py spectacular --lang=en > openapi.yaml
+        env:
+          DJANGO_SETTINGS_MODULE: openforms.conf.ci
+          SECRET_KEY: dummy
+          DB_NAME: postgres
+          DB_USER: postgres
+          DB_PASSWORD: ''
       - name: Store OAS artifact
         uses: actions/upload-artifact@v2
         with:
