@@ -116,6 +116,9 @@ class AuthenticationStartView(AuthenticationFlowBaseView):
         except KeyError:
             return HttpResponseBadRequest("unknown plugin")
 
+        if not plugin.is_enabled:
+            return HttpResponseBadRequest("plugin not enabled")
+
         if not form.login_required:
             return HttpResponseBadRequest("login not required")
 
