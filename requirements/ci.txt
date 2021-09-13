@@ -422,7 +422,7 @@ git+https://github.com/maykinmedia/json-logic-py.git@2ffa47be494d147d42721175e4a
     #   -r requirements/base.txt
 mccabe==0.6.1
     # via flake8
-mozilla-django-oidc-db==0.4.0
+mozilla-django-oidc-db==0.5.0
     # via
     #   -c requirements/base.txt
     #   -r requirements/base.txt
