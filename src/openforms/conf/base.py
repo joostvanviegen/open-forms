@@ -182,6 +182,7 @@ INSTALLED_APPS = [
     "openforms.logging.apps.LoggingAppConfig",
     "openforms.contrib.brp",
     "openforms.contrib.kvk",
+    "openforms.contrib.irma",
     "openforms.contrib.bag.apps.BAGConfig",
     "openforms.contrib.microsoft.apps.MicrosoftApp",
     "openforms.registrations",
