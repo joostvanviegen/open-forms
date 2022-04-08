@@ -10,11 +10,11 @@ from .client import IrmaClient
 
 class IrmaConfigManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().select_related("service")
+        return super().get_queryset().select_related("_service")
 
 class IrmaConfig(SingletonModel):
 
-    irma_service = models.OneToOneField(
+    _service = models.OneToOneField(
         "zgw_consumers.Service",
         verbose_name=_("Irma API"),
         on_delete=models.SET_NULL,
