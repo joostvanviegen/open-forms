@@ -1,0 +1,204 @@
+openapi: 3.0.1
+info:
+  title: API for IRMA
+  description: This is the API for IRMA.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8088
+tags: 
+- name Session
+paths:
+  /session:
+  post:
+    tags:
+    - Session
+    summary: Create a new session
+    operationId: createSession
+    headers:
+      - name: Authorization
+        description: JWT token
+        schema:
+          type: string
+          format: uuid
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          application/json:
+           type: object
+           properties:
+             context:
+               type: string
+               required: true
+              disclose:
+               type: array
+               required: true
+    responses:
+           default:
+              description: Session created
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        required: true
+                      sessionptr:
+                        type: object
+                        required: true
+                      frontendRequest:
+                        type: object
+                        required: true
+                        authorization:
+                          type: string
+                          required: true
+                        minProtocolVersion:
+                          type: string
+                          required: false
+                        maxProtocolVersion:
+                          type: string
+                          required: false
+  /session/{requestorToken}:
+    delete:
+      tags:
+      - Session
+      summary: Delete a session
+      operationId: deleteSession
+      parameters:
+        - name: requestorToken
+          in: path
+          required: true
+          schema:
+            type: string
+  /session/{requestorToken}/status:
+    get:
+      tags:
+      - Session
+      summary: Get the status of a session
+      operationId: getSessionStatus
+      parameters:
+        - name: requestorToken
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+           default:
+              description: Session status
+              content:
+                application/json:
+                  schema:
+                    type: string
+                    required: true
+                    enum:                     enum:
+                        - INITIALIZED
+                        - PAIRING
+                        - CONNECTED
+                        - CANCELLED
+                        - DONE
+                        - TIMEOUT
+  /sesssion/{$requestorToken}/statusevents:
+    get:
+      tags:
+      - Session
+      summary: Get the status events of a session
+      operationId: getSessionStatusEvents
+      parameters:
+        - name: requestorToken
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+           default:
+              description: Subscribe to status events
+              content:
+                application/json:
+                  schema:
+                    type: object
+  /session/{requestorToken}/result:
+    get:
+      tags:
+      - Session
+      summary: Get the result of a session
+      operationId: getSessionResult
+      parameters:
+        - name: requestorToken
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+           default:
+              description: Session result
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        required: true
+                        enum:
+                          - disclosing
+                          - signing
+                          - issuing
+                    status:
+                      type: string
+                      required: true
+                      enum:
+                        - INITIALIZED
+                        - PAIRING
+                        - CONNECTED
+                        - CANCELLED
+                        - DONE
+                        - TIMEOUT
+  /session/{requestorToken}/result-jwt:
+    get:
+      tags:
+      - Session
+      - JWT
+      summary: Get the result of a session as a JWT
+      operationId: getSessionResultJWT
+      parameters:
+        - name: requestorToken
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        default:
+          description: The result as a JWT
+          content:
+            application/json:
+              body:
+                type: string
+   /session/{requestorToken}/getproof:
+      get:
+        tags:
+        - Session
+        - JWT
+        summary: Get the result of a session as a JWT but in a different format
+        operationId: getSessionResultJWTProof
+        parameters:
+          - name: requestorToken
+            in: path
+            required: true
+            schema:
+              type: string
+        responses:
+          default:
+            description: The result as a JWT but different
+            content:
+              application/json:
+                body:
+                  type: string
+    /publickey:
+      get:
+        tags:
+        - JWT
+        summary: Get the public PEM key with which JWT's kan be verified.
+        operationId: getPublicKey
+                     
