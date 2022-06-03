@@ -6,60 +6,53 @@ info:
 servers:
   - url: http://localhost:8088
 tags: 
-- name Session
+- name: Session
 paths:
   /session:
-  post:
-    tags:
-    - Session
-    summary: Create a new session
-    operationId: createSession
-    headers:
+    post:
+      tags:
+      - Session
+      summary: Create a new session
+      operationId: createSession
+      parameters:
       - name: Authorization
+        in: header
         description: JWT token
         schema:
           type: string
           format: uuid
-    parameters:
-      - name: body
-        in: body
-        required: true
-        schema:
+      requestBody:
+        content:
           application/json:
-           type: object
-           properties:
-             context:
-               type: string
-               required: true
-              disclose:
-               type: array
-               required: true
-    responses:
+           schema:
+            type: object
+            properties:
+                context:
+                  type: string
+                disclose:
+                  type: array
+                  items:
+                    type: string
+      responses:
            default:
-              description: Session created
-              content:
-                application/json:
+            description: Session created
+            content:
+              application/json:
                   schema:
                     type: object
                     properties:
                       token:
                         type: string
-                        required: true
                       sessionptr:
                         type: object
-                        required: true
                       frontendRequest:
                         type: object
-                        required: true
-                        authorization:
+                      authorization:
+                        type: string
+                      minProtocolVersion:
                           type: string
-                          required: true
-                        minProtocolVersion:
+                      maxProtocolVersion:
                           type: string
-                          required: false
-                        maxProtocolVersion:
-                          type: string
-                          required: false
   /session/{requestorToken}:
     delete:
       tags:
@@ -72,6 +65,13 @@ paths:
           required: true
           schema:
             type: string
+      responses:
+        default:
+          description: Deletion confirmation
+          content:
+            application/text:
+              schema:
+                type: string
   /session/{requestorToken}/status:
     get:
       tags:
@@ -91,15 +91,14 @@ paths:
                 application/json:
                   schema:
                     type: string
-                    required: true
-                    enum:                     enum:
+                    enum:
                         - INITIALIZED
                         - PAIRING
                         - CONNECTED
                         - CANCELLED
                         - DONE
                         - TIMEOUT
-  /sesssion/{$requestorToken}/statusevents:
+  /sesssion/{requestorToken}/statusevents:
     get:
       tags:
       - Session
@@ -140,15 +139,13 @@ paths:
                     properties:
                       type:
                         type: string
-                        required: true
                         enum:
                           - disclosing
                           - signing
                           - issuing
-                    status:
-                      type: string
-                      required: true
-                      enum:
+                      status:
+                        type: string
+                        enum:
                         - INITIALIZED
                         - PAIRING
                         - CONNECTED
@@ -173,9 +170,9 @@ paths:
           description: The result as a JWT
           content:
             application/json:
-              body:
+              schema:
                 type: string
-   /session/{requestorToken}/getproof:
+  /session/{requestorToken}/getproof:
       get:
         tags:
         - Session
@@ -193,12 +190,18 @@ paths:
             description: The result as a JWT but different
             content:
               application/json:
-                body:
-                  type: string
-    /publickey:
+               schema:
+                    type: string
+  /publickey:
       get:
         tags:
         - JWT
         summary: Get the public PEM key with which JWT's kan be verified.
         operationId: getPublicKey
-                     
+        responses:
+          default:
+            description: The public PEM key to verify signed JWT tokens
+            content:
+              application/text:
+                example:
+                  "blabla"

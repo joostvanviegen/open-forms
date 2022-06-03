@@ -1,8 +1,8 @@
 import logging
-from re import L
 
 from requests import RequestException
 from zds_client import ClientError
+from openfroms.contrib.irma.models import IrmaConfig
 
 logger = logging.getLogger(__name__)
 
