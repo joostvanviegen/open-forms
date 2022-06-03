@@ -1,12 +1,16 @@
-@import '~@fortawesome/fontawesome-free/scss/fontawesome';
-@import "~@fortawesome/fontawesome-free/scss/v4-shims.scss";
-@import '~@fortawesome/fontawesome-free/scss/brands';
-@import '~@fortawesome/fontawesome-free/scss/regular';
-@import '~@fortawesome/fontawesome-free/scss/solid';
-@import '~formiojs/dist/formio.full.css';
+@import '@fortawesome/fontawesome-free/scss/fontawesome';
+@import '@fortawesome/fontawesome-free/scss/v4-shims.scss';
+@import '@fortawesome/fontawesome-free/scss/brands';
+@import '@fortawesome/fontawesome-free/scss/regular';
+@import '@fortawesome/fontawesome-free/scss/solid';
+/**
+ * Builder is full minus font-awesome.
+ *
+ * See https://github.com/formio/formio.js/blob/master/gulpfile.js#L113
+ */
+@import 'formiojs/dist/formio.builder.css';
 // since we include flatpickr in the global scope, we need to embed the CSS ourselves
-@import '~flatpickr/dist/flatpickr.css';
-
+@import 'flatpickr/dist/flatpickr.css';
 
 .field-configuration {
   overflow: unset;
@@ -14,7 +18,6 @@
 
 .field-configuration,
 .form-definition {
-
   & > div:first-of-type {
     width: 100%;
   }
@@ -48,8 +51,7 @@ li.nav-item {
 
 .formio-dialog,
 .ck-body .ck.ck-balloon-panel,
-div.flatpickr-calendar.open
-{
+div.flatpickr-calendar.open {
   z-index: 10000000;
 }
 
@@ -67,7 +69,24 @@ div.flatpickr-calendar.open
   padding-top: 10px;
 }
 
-[ref="editForm"] {
+[ref='editForm'] {
+  .choices__list {
+    &--dropdown {
+      background-color: var(--body-bg);
+      color: var(--body-fg);
+      border-color: var(--border-color);
+    }
+
+    .choices__input {
+      background-color: var(--form-input-bg);
+      border-color: var(--border-color);
+    }
+
+    .choices__item--selectable.is-highlighted {
+      background-color: var(--formio-dropdown-highlighted-bg);
+    }
+  }
+
   .choices__list + .choices__input {
     border: none;
     border-radius: unset;
@@ -85,10 +104,10 @@ div.flatpickr-calendar.open
 
 // bootstrap competing with django admin form styling...
 .react-form-create {
-  :not([ref="editForm"]) {
-
+  :not([ref='editForm']) {
     .form-row {
-      &, :not(select) {
+      &,
+      :not(select) {
         box-sizing: initial;
       }
     }
@@ -106,7 +125,8 @@ div.flatpickr-calendar.open
   margin-bottom: 0;
 
   .form-row {
-    &, * {
+    &,
+    * {
       box-sizing: border-box !important;
     }
   }
@@ -132,5 +152,70 @@ div.flatpickr-calendar.open
 .co-sign {
   .btn {
     border: solid 1px #ccc;
+  }
+}
+
+// bootstrap overrides and dark theme...
+.form-control {
+  background-color: var(--form-input-bg);
+  border-color: var(--border-color);
+  color: var(--body-fg);
+
+  &:focus {
+    background-color: var(--form-input-bg);
+    border-color: var(--body-quiet-color);
+    color: var(--body-fg);
+  }
+}
+
+.card {
+  background-color: var(--body-bg);
+  color: var(--body-fg);
+  border-color: var(--border-color);
+
+  @at-root body.view__body & {
+    background-color: white;
+  }
+}
+
+.card-header {
+  color: var(--body-fg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .card-header {
+    background-color: $color-dark;
+  }
+
+  .btn,
+  .btn:hover {
+    color: var(--body-fg);
+  }
+
+  .formio-dialog {
+    background: rgba(0, 0, 0, 0.7);
+    color: var(--body-fg);
+  }
+
+  .formio-dialog.formio-dialog-theme-default {
+    .formio-dialog-content {
+      background: var(--body-bg);
+    }
+  }
+
+  .nav-tabs {
+    .nav-link.active {
+      color: var(--body-fg);
+      background-color: var(--body-bg);
+      border-color: var(--border-color) var(--border-color) var(--body-bg);
+    }
+
+    .nav-link {
+      &:focus,
+      &:hover {
+        color: var(--body-fg);
+        border-color: var(--hairline-color) var(--hairline-color) var(--body-bg);
+      }
+    }
   }
 }

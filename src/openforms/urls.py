@@ -85,6 +85,18 @@ urlpatterns = [
             "openforms.authentication.contrib.digid_eherkenning_oidc.eherkenning_urls",
         ),
     ),
+    path(
+        "digid-machtigen-oidc/",
+        include(
+            "openforms.authentication.contrib.digid_eherkenning_oidc.digid_machtigen_urls",
+        ),
+    ),
+    path(
+        "eherkenning-bewindvoering-oidc/",
+        include(
+            "openforms.authentication.contrib.digid_eherkenning_oidc.eherkenning_bewindvoering_urls",
+        ),
+    ),
     path("payment/", include("openforms.payments.urls", namespace="payments")),
     # NOTE: we dont use the User creation feature so don't enable all the mock views
     path("digid/", include("openforms.authentication.contrib.digid.urls")),
@@ -106,8 +118,9 @@ if settings.DEBUG and apps.is_installed("debug_toolbar"):
         path("__debug__/", include(debug_toolbar.urls)),
     ] + urlpatterns
 
-if settings.DEBUG:
+if settings.DEBUG:  # pragma: nocover
     from openforms.forms.models import Form
+    from openforms.registrations.contrib.email.views import EmailRegistrationTestView
 
     urlpatterns += [
         path(
@@ -119,6 +132,11 @@ if settings.DEBUG:
             "dev/email/confirmation/<int:submission_id>",
             EmailWrapperTestView.as_view(),
             name="dev-email-confirm",
+        ),
+        path(
+            "dev/email/registration/<int:submission_id>",
+            EmailRegistrationTestView.as_view(),
+            name="dev-email-registration",
         ),
         path(
             "dev/submissions/<int:pk>/pdf",

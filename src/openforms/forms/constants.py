@@ -11,7 +11,7 @@ class LogicActionTypes(DjangoChoices):
     property = ChoiceItem("property", _("Modify a component property"))
     value = ChoiceItem("value", _("Set the value of a component"))
 
-    requires_component = {property, value}
+    requires_component = {property.value, value.value}
 
 
 class PropertyTypes(DjangoChoices):
@@ -31,3 +31,24 @@ class SubmissionAllowedChoices(DjangoChoices):
     no_without_overview = ChoiceItem(
         "no_without_overview", _("No (without overview page)")
     )
+
+
+class FormVariableSources(DjangoChoices):
+    component = ChoiceItem("component", _("Component"))
+    user_defined = ChoiceItem("user_defined", _("User defined"))
+    static = ChoiceItem("static", _("Static"))
+
+
+class FormVariableDataTypes(DjangoChoices):
+    string = ChoiceItem("string", _("String"))
+    boolean = ChoiceItem("boolean", _("Boolean"))
+    object = ChoiceItem("object", _("Object"))
+    array = ChoiceItem("array", _("Array"))
+    int = ChoiceItem("int", _("Integer"))
+    float = ChoiceItem("float", _("Float"))
+    datetime = ChoiceItem("datetime", _("Datetime"))
+    time = ChoiceItem("time", _("Time"))
+
+
+class FormVariableStaticInitialValues(DjangoChoices):
+    now = ChoiceItem("now", _("Now"))

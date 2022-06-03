@@ -1,6 +1,5 @@
-import os
 import re
-from urllib.parse import urljoin
+from typing import Any
 
 from decouple import Csv, config as _config, undefined
 from sentry_sdk.integrations import DidNotEnable, django, redis
@@ -44,7 +43,7 @@ class Filesize:
     k/K for kibibytes and m/M for mebibytes (as opposed to kilobytes/megabytes).
     """
 
-    PATTERN = re.compile(r"^(?P<numbers>[0-9]+)(?P<unit>[a-zA-Z]+)?$")
+    PATTERN = re.compile(r"^(?P<numbers>[0-9]+)( )*(?P<unit>[a-zA-Z]+)?$")
 
     S_SI = S_SI
     S_NGINX = S_NGINX
@@ -73,7 +72,7 @@ class Filesize:
         return converter(numbers)
 
 
-def config(option: str, default=undefined, *args, **kwargs):
+def config(option: str, default: Any = undefined, *args, **kwargs):
     """
     Pull a config parameter from the environment.
 

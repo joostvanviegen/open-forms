@@ -29,6 +29,12 @@ def set_property_value(
     return configuration
 
 
+def get_component(configuration: JSONObject, key: str) -> JSONObject:
+    for component in iter_components(configuration=configuration, recursive=True):
+        if component["key"] == key:
+            return component
+
+
 @elasticapm.capture_span(span_type="app.submissions.logic")
 def evaluate_form_logic(
     submission: "Submission",
@@ -71,7 +77,15 @@ def evaluate_form_logic(
     if _evaluated:
         return configuration
 
-    rules = FormLogic.objects.filter(form=step.form_step.form)
+    # renderer evaluates logic for all steps at once, so we can avoid repeated queries
+    # by caching the rules on the form instance.
+    # Note that form.formlogic_set.all() is never cached by django, so we can't rely
+    # on that.
+    rules = getattr(submission.form, "_cached_logic_rules", None)
+    if rules is None:
+        rules = FormLogic.objects.filter(form=submission.form)
+        submission.form._cached_logic_rules = rules
+
     submission_state = submission.load_execution_state()
 
     for rule in rules:
@@ -100,6 +114,8 @@ def evaluate_form_logic(
                         action["form_step"]
                     )
                     submission_step_to_modify._is_applicable = False
+                    if submission_step_to_modify == step:
+                        step._is_applicable = False
 
     if dirty:
         # only keep the changes in the data, so that old values do not overwrite otherwise
@@ -107,6 +123,17 @@ def evaluate_form_logic(
         data_diff = {}
         for key, new_value in step.data.items():
             original_value = data.get(key)
+            # Reset the value of any field that may have become hidden again after evaluating the logic
+            if original_value:
+                component = get_component(configuration, key)
+                if (
+                    component
+                    and component.get("hidden")
+                    and component.get("clearOnHide")
+                ):
+                    data_diff[key] = defaults.get(key, "")
+                    continue
+
             if new_value == original_value:
                 continue
             data_diff[key] = new_value

@@ -8,7 +8,9 @@ from furl import furl
 from mozilla_django_oidc.views import get_next_url
 
 from digid_eherkenning_oidc_generics.mixins import (
+    SoloConfigDigiDMachtigenMixin,
     SoloConfigDigiDMixin,
+    SoloConfigEHerkenningBewindvoeringMixin,
     SoloConfigEHerkenningMixin,
 )
 from digid_eherkenning_oidc_generics.views import (
@@ -19,7 +21,9 @@ from digid_eherkenning_oidc_generics.views import (
 from ...views import BACKEND_OUTAGE_RESPONSE_PARAMETER
 from .backends import (
     OIDCAuthenticationDigiDBackend,
+    OIDCAuthenticationDigiDMachtigenBackend,
     OIDCAuthenticationEHerkenningBackend,
+    OIDCAuthenticationEHerkenningBewindvoeringBackend,
 )
 
 logger = logging.getLogger(__name__)
@@ -92,3 +96,29 @@ class eHerkenningOIDCAuthenticationCallbackView(
 ):
     plugin_identifier = "eherkenning_oidc"
     auth_backend_class = OIDCAuthenticationEHerkenningBackend
+
+
+class DigiDMachtigenOIDCAuthenticationRequestView(
+    SoloConfigDigiDMachtigenMixin, OIDCAuthenticationRequestView
+):
+    plugin_identifier = "digid_machtigen_oidc"
+
+
+class DigiDMachtigenOIDCAuthenticationCallbackView(
+    SoloConfigDigiDMachtigenMixin, OIDCAuthenticationCallbackView
+):
+    plugin_identifier = "digid_machtigen_oidc"
+    auth_backend_class = OIDCAuthenticationDigiDMachtigenBackend
+
+
+class EHerkenningBewindvoeringOIDCAuthenticationRequestView(
+    SoloConfigEHerkenningBewindvoeringMixin, OIDCAuthenticationRequestView
+):
+    plugin_identifier = "eherkenning_bewindvoering_oidc"
+
+
+class EHerkenningBewindvoeringOIDCAuthenticationCallbackView(
+    SoloConfigEHerkenningBewindvoeringMixin, OIDCAuthenticationCallbackView
+):
+    plugin_identifier = "eherkenning_bewindvoering_oidc"
+    auth_backend_class = OIDCAuthenticationEHerkenningBewindvoeringBackend

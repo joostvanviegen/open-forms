@@ -1,5 +1,4 @@
 from django.contrib import admin, messages
-from django.core.exceptions import PermissionDenied
 from django.http.response import HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
@@ -7,16 +6,22 @@ from django.utils.html import format_html_join
 from django.utils.translation import ngettext, ugettext_lazy as _
 
 from ordered_model.admin import OrderedInlineModelAdminMixin, OrderedTabularInline
-from rest_framework.exceptions import ValidationError
 
+from openforms.config.models import GlobalConfiguration
+from openforms.payments.admin import PaymentBackendChoiceFieldMixin
 from openforms.registrations.admin import RegistrationBackendFieldMixin
+from openforms.utils.expressions import FirstNotBlank
 
-from ...payments.admin import PaymentBackendChoiceFieldMixin
-from ...utils.expressions import FirstNotBlank
-from ..forms.form import FormImportForm
 from ..models import Form, FormDefinition, FormStep
-from ..utils import export_form, get_duplicates_keys_for_form, import_form
+from ..models.form import FormsExport
+from ..utils import export_form, get_duplicates_keys_for_form
 from .mixins import FormioConfigMixin
+from .views import (
+    DownloadExportedFormsView,
+    ExportFormsForm,
+    ExportFormsView,
+    ImportFormsView,
+)
 
 
 class FormStepInline(OrderedTabularInline):
@@ -108,7 +113,12 @@ class FormAdmin(
         "get_object_actions",
     )
     prepopulated_fields = {"slug": ("name",)}
-    actions = ["make_copies", "set_to_maintenance_mode", "remove_from_maintenance_mode"]
+    actions = [
+        "make_copies",
+        "set_to_maintenance_mode",
+        "remove_from_maintenance_mode",
+        "export_forms",
+    ]
     list_filter = ("active", "maintenance_mode", FormDeletedListFilter)
     search_fields = ("name", "internal_name")
 
@@ -213,48 +223,16 @@ class FormAdmin(
         my_urls = [
             path(
                 "import/",
-                self.admin_site.admin_view(self.import_view),
+                self.admin_site.admin_view(ImportFormsView.as_view()),
                 name="forms_import",
-            )
+            ),
+            path(
+                "export/",
+                self.admin_site.admin_view(ExportFormsView.as_view()),
+                name="forms_export",
+            ),
         ]
         return my_urls + urls
-
-    def import_view(self, request):
-        if not self.has_add_permission(request):
-            raise PermissionDenied
-
-        if "_import" in request.POST:
-            form = FormImportForm(request.POST, request.FILES)
-            if form.is_valid():
-                try:
-                    import_file = form.cleaned_data["file"]
-                    created_fds = import_form(import_file)
-                    if created_fds:
-                        self.message_user(
-                            request,
-                            _(
-                                "Form definitions were created with the following slugs: {}"
-                            ).format(created_fds),
-                            level=messages.WARNING,
-                        )
-                    self.message_user(
-                        request,
-                        _("Form successfully imported"),
-                        level=messages.SUCCESS,
-                    )
-                    return HttpResponseRedirect(reverse("admin:forms_form_changelist"))
-                except ValidationError as exc:
-                    self.message_user(
-                        request,
-                        _("Something went wrong while importing form: {}").format(exc),
-                        level=messages.ERROR,
-                    )
-        else:
-            form = FormImportForm()
-
-        context = dict(self.admin_site.each_context(request), form=form)
-
-        return TemplateResponse(request, "admin/forms/form/import_form.html", context)
 
     def make_copies(self, request, queryset):
         for instance in queryset:
@@ -351,3 +329,55 @@ class FormAdmin(
 
         # soft-deletes
         queryset.filter(_is_deleted=False).update(_is_deleted=True)
+
+    @admin.action(description=_("Export forms"))
+    def export_forms(self, request, queryset):
+        if not request.user.email:
+            self.message_user(
+                request=request,
+                message=_(
+                    "Please configure your email address in your admin profile before requesting a bulk export"
+                ),
+                level=messages.ERROR,
+            )
+            return
+
+        selected_forms_uuids = queryset.values_list("uuid", flat=True)
+        form = ExportFormsForm(
+            initial={
+                "forms_uuids": [str(form_uuid) for form_uuid in selected_forms_uuids],
+            }
+        )
+        context = dict(self.admin_site.each_context(request), form=form)
+        return TemplateResponse(request, "admin/forms/form/export.html", context)
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        config = GlobalConfiguration.get_solo()
+        extra_context["feature_flags"] = {
+            "enable_form_variables": config.enable_form_variables
+        }
+        return super().change_view(
+            request,
+            object_id,
+            form_url,
+            extra_context=extra_context,
+        )
+
+
+@admin.register(FormsExport)
+class FormsExportAdmin(admin.ModelAdmin):
+    list_display = ("uuid", "user", "datetime_requested")
+    list_filter = ("user",)
+    search_fields = ("user__username",)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path(
+                "download/<uuid:uuid>/",
+                self.admin_site.admin_view(DownloadExportedFormsView.as_view()),
+                name="download_forms_export",
+            ),
+        ]
+        return my_urls + urls

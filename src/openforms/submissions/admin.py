@@ -169,7 +169,9 @@ class SubmissionAdmin(admin.ModelAdmin):
         "get_appointment_error_information",
         "on_completion_task_ids",
         "confirmation_email_sent",
+        "registration_attempts",
     ]
+    raw_id_fields = ("form", "previous_submission")
     actions = [
         "export_csv",
         "export_json",

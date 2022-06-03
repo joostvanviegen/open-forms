@@ -161,6 +161,7 @@ DigiD/EHerkenning/eIDAS settings
 * ``EHERKENNING_SERVICE_INDEX``: The index that was specified in the metadata for the eHerkenning service.
 * ``EHERKENNING_SERVICE_UUID``: The UUID of the eHerkenning service. This can be found in the dienstencatalogus in the ``ServiceUUID`` element (inside the ``ServiceDescription`` element)
 * ``EHERKENNING_SERVICE_INSTANCE_UUID``: The UUID of the eHerkenning service instance. This can be found in the dienstencatalogus in the ``ServiceUUID`` element (inside the ``ServiceInstance`` element)
+* ``EHERKENNING_CONTENT_TYPE``: The value of the ``content-type`` header used in the Artifact resolution request. Defaults to ``application/soap+xml``.
 * ``EIDAS_SERVICE_INDEX``: The index that was specified in the metadata for the eIDAS service.
 * ``EIDAS_SERVICE_UUID``: The UUID of the eIDAS service. This can be found in the dienstencatalogus in the ``ServiceUUID`` element (inside the ``ServiceDescription`` element)
 * ``EIDAS_SERVICE_INSTANCE_UUID``: The UUID of the eIDAS service instance. This can be found in the dienstencatalogus in the ``ServiceUUID`` element (inside the ``ServiceInstance`` element)
@@ -284,6 +285,9 @@ Other settings
 
 * ``TWO_FACTOR_PATCH_ADMIN``: Whether to use the 2 Factor Authentication login flow for
   the admin or not. Default ``True``. You'll probably want to disable this when using OIDC.
+
+* ``FORMS_EXPORT_REMOVED_AFTER_DAYS``: The number of days after which zip files of exported forms should be deleted.
+  Defaults to 7 days.
 
 .. _`Django DATABASE settings`: https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-DATABASE-ENGINE
 

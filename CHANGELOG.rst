@@ -2,6 +2,201 @@
 Changelog
 =========
 
+1.1.0 (2022-05-24)
+==================
+
+Feature release 1.1.0
+
+For the full list of changes, please review the changelog entries below for 1.1.0-rc.0
+and 1.1.0-rc.1.
+
+Since 1.1.0-rc.1, the following changes were made:
+
+* Fixed maintaining the logo aspect ratio in the confirmation PDF for a submission
+* Exposed options to display content/WYSIWYG text in confirmation emails
+* WYSIWYG component content is displayed full-width in the confirmation email and PDF
+
+1.1.0-rc.1 (2022-05-20)
+=======================
+
+Second release candidate for the 1.1.0 feature release.
+
+* [#1624] Fixed list of prefill attributes refresh on prefill plugin change
+* Fixed styling issue with card components in non-admin pages
+* [#1628] Make fieldset labels stand out in emails
+* [#1628] Made styling of registration email consistent with confirmation email
+* Added raw_id_fields to submissions admin for a performance boost
+* [#1627] Fixed CSRF error when authenticating in the admin after starting a form
+* Fixed cookie ``SameSite=None`` being used in non-HTTPS context for dev environments
+* [#1628] Added missing form designer translations for display/summary options
+* [#1628] Added vertical spacing to confirmation PDF pages other than the first page
+
+.. note:: #1627 caused session authentication to no longer be available in the API
+   schema for the submission suspend/complete endpoints. This was not intended to be
+   public API, so this option is gone now.
+
+   Both of these endpoints require a valid submission ID to exist in the session to
+   use them, which was the intended behaviour.
+
+1.1.0-rc.0 (2022-05-17)
+=======================
+
+First release candidate of the 1.1.x release series!
+
+Version 1.1.0 contains a number of improvements, both in the backend and SDK. All
+changes are backwards compatible, but some features have been deprecated and will be
+removed in version 2.0, see the last section of this changelog entry.
+
+**Summary**
+
+* The API spec has been bumped to version 1.1.0
+* A new minor version of the SDK is available, which requires a minimum backend version
+  of 1.1.0
+* Upgrading should be straigh-forward - no manual interventions are needed.
+
+**New features**
+
+* [#1418] Expose ``Submission.isAuthenticated`` in the API
+* [#1404] Added configuration options for required fields
+
+  - Configure whether fields should be marked as required by default or not
+  - Configure if an asterisk should be used for required fields or not
+
+* [#565] Added support for DigiD/eHerkenning via OpenID Connect protocol
+* [#1420] Links created by the form-builder now always open in a new window (by default)
+* [#1358] Added support for Mutual TLS (mTLS) in service configuration - you can now
+  upload client/server certificates and relate them to JSON/SOAP services.
+* [#1495] Reworked admin interface to configure mTLS for SOAP services
+* [#1436] Expose ``Form.submissionAllowed`` as public field in the API
+* [#1441] Added submission-specific user logout endpoint to the API. This now clears the
+  session for the particular form only, leaving other form session untouched. For
+  authenticated staff users, this no longer logs you out from the admin interface. The
+  existing endpoint is deprecated.
+* [#1449] Added option to specify maximum number of files for file uploads
+* [#1452] Added option to specify a validation regular-expression on telefone field
+* [#1452] Added phone-number validators to API for extensive validation
+* [#1313] Added option to auto redirect to selected auth backend
+* [#1476] Added readonly option to BSN, date and postcode components
+* [#1472] Improved logic validation error feedback in the form builder
+* [#1482, #1510] Added bulk export and import of forms functionality to the admin interface
+* [#1483] Added support for dark browser theme
+* [#1471] Added support for DigiD Machtigen and eHerkenning Bewindvoering with OIDC
+* [#1453] Added Formio specific file-upload endpoint, as it expects a particular
+  response format for success/failure respones. The existing endpoint is deprecated.
+* [#1540] Removed "API" and "layout" tabs for the content component.
+* [#1544] Improved overview of different components in the logic rule editor.
+* [#1541] Allow some NL Design System compatible custom CSS classes for the content
+  component.
+* [#1451] Completely overhauled "submission rendering". Submission rendering is used
+  to generate the confirmation e-mails, PDFs, registration e-mails, exports...
+
+  - You can now specify whether a component should be displayed in different modes
+    (PDF, summary, confirmation e-mail)
+  - Implemented sane defaults for configuration options
+  - PDF / Confirmation e-mails / registration e-mails now have more structure,
+    including form step titles
+  - Container elements (fieldsets, columns, steps) are only rendered if they have
+    visible content
+  - Logic is now respected to determine which elements are visible or hidden
+  - Added a CLI render mode for debug/testing purposes
+  - Fixed page numbers being half-visible in the confirmation PDF
+
+* [#1458] Submission registration attempts are now limited to a configurable upper
+  bound. After this is reached, there will be no automatic retries anymore, but manual
+  retries via the admin interface are still possible.
+* [#1584] Use the original filename when downloading submission attachments
+* [#1308] The admin interface now displays warnings and proper error messages if your
+  session is about to expire or has expired. When the session is about to expire, you
+  can extend it so you can keep working for longer times in the UI.
+
+**Bugfixes**
+
+All the bugfixes up to the ``1.0.8`` release are included.
+
+* [#1422] Prevent update of custom keys on label changes for radio button components
+  in the form builder
+* [#1061] Fixed duplicate 'multiple' checkbox in email component options
+* [#1480] Reset steps with data if they turn out to be not applicable
+* [#1560] Fix prefill fields in columns not working (thanks @rbakels)
+
+**Documentation**
+
+* [#1547] Document advanced rules for selectboxes
+* [#1564] Document how logic rules are evaluated
+
+**Project maintenance**
+
+* [#1414] Removed ``GlobalConfiguration.enable_react_form`` feature flag
+* Set CSP_REPORT_ONLY to true in docker-compose setup
+* Set up deterministic networking across compose files
+* Upgrade to django-admin-index 2.0.0
+* Delete dead code on custom fields
+* Upgraded to Webpack 5 & use ``nvm`` config on CI
+* Bumped Node JS version from 14 to 16 (and npm from v6 to v8)
+* Added command to disable demo plugins and applied to OAS generation script
+* [maykinmedia/django-digid-eherkenning#4] Updated because of external provider changes
+* Added CI check to lint requirements/base.in
+* Ensure uwsgi runs in master process mode for better crash recovery
+* Improved development views to view how confirmation e-mails/PDFs will be rendered
+* Refactor submission models
+* Refactor form serializers file
+* Moved some generic OIDC functionality to mozilla-django-oidc-db
+* [#1366] default to allow CORS with docker-compose
+* Remove SDK from docker-compose
+* Add SMTP container to docker-compose stack for outgoing e-mails
+* [#1444] resolve media files locally too with WeasyPrint
+* Update momentjs version (dependabot alert)
+* [#1574] Dropped Django 2.x SameSiteNoneCookieMiddlware
+
+**Deprecations**
+
+* [#1441] The ``/api/v1/authentication/session`` endpoint is now deprecated. Use the
+  submission-specific endpoint instead.
+* [#1453] The  ``/api/v1/submissions/files/upload`` endpoint is now deprecated. Use the
+  formio-specific endpoint instead.
+* ``Submission.nextStep`` is deprecated as it's unused, all the information to determine
+  this is available from other attributes.
+
+1.0.8 (2022-05-16)
+==================
+
+Bugfix maintenance release
+
+* [#1568] Fixed logic engine crash when form fields are removed while someone is
+  filling out the form
+* [#1539] Fixed crash when deleting a temporary file upload
+* [#1344] Added missing translation for validation error key
+* [#1593] Update nginx location rules for fileuploads
+* [#1587] Fixed analytics scripts being blocked by the CSP
+* Updated to SDK version 1.0.3 with frontend bugfixes
+* Fixed API schema documentation for temporary upload GET
+
+1.0.7 (2022-05-04)
+==================
+
+Fixed some more reported issues
+
+* [#1492] Fixed crashes when using file upload components with either a maximum filesize
+  specified as empty string/value or a value containing spaces.
+* [#1550] Fixed form desinger partial crash when adding a currency/number component
+* Bump uwsgi version
+* Ensure uwsgi runs in master process mode
+* [#1453] Fixed user feedback for upload handler validation errors
+* [#1498] Fixed duplicate payment completion updates being sent by registration backend(s)
+
+1.0.6 (2022-04-25)
+==================
+
+Periodic bugfix release
+
+* Bumped to SDK version 1.0.2 with frontend bugfixes
+* Updated DigiD/eHerkenning/eIDAS integration library for breaking changes in some
+  brokers per May 1st
+* Bumped to latest Django security releases
+* [#1493] Fixed form copy admin (bulk/object) actions not copying logic
+* [#1489] Fixed layout of confirmation emails
+* [#1527] Fixed clearing/resetting the data of fields hidden by server-side logic
+
 1.0.5 (2022-03-31)
 ==================
 

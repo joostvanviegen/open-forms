@@ -1,5 +1,4 @@
 .sdk-snippet {
-
   & &__snippet {
     display: inline-block;
     padding-top: 10px;
@@ -18,6 +17,7 @@
     cursor: pointer;
     vertical-align: top;
     font-size: 120%;
+    color: var(--body-fg);
   }
 
   div.help {
@@ -29,5 +29,4 @@
       background-position-y: 4px;
     }
   }
-
 }

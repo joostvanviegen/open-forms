@@ -1,5 +1,6 @@
 {% load static i18n solo_tags style_dictionary %}<!DOCTYPE html>
-<html lang="nl">
+{% get_solo 'config.GlobalConfiguration' as config %}
+<html lang="nl" class="{{ config.theme_classname }}">
     <head>
         <meta charset="utf-8">
         <title>{% block title %}{% trans "Summary PDF" %}{% endblock %}</title>
@@ -7,8 +8,10 @@
         <link href="{% static 'bundles/pdf-css.css' %}" media="all" rel="stylesheet" />
         {% block extra_css %}{% endblock %}
 
+        {# if an external stylesheet is configured, apply it BEFORE the admin-specified design tokens #}
+        {% if config.theme_stylesheet %}<link href="{{ config.theme_stylesheet }}" media="all" rel="stylesheet" />{% endif %}
+
         {# Inject design tokens for theming #}
-        {% get_solo 'config.GlobalConfiguration' as config %}
         {% style_dictionary config.design_token_values prefix="of" as design_tokens %}
         {# This goes through WeasyPrint normally, so excluded from CSP #}
         <style>
@@ -40,24 +43,29 @@
                 {% endcomment %}
             </section>
 
-            {% for step in report.steps %}
-                <div class="submission-step">
-                    <h2 class="subtitle">{{ step.title }}</h2>
+            {% for submission_step_node in report.renderer.get_children %}
+                {% if submission_step_node.has_children %}
+                    <div class="submission-step">
+                        <h2 class="subtitle">{{ submission_step_node.render }}</h2>
+                        {% for component_node in submission_step_node.get_children %}
+                            {% if component_node.label or component_node.display_value %}
+                                <div class="submission-step-row {% if component_node.layout_modifier %}submission-step-row--{{ component_node.layout_modifier }}{% endif %}">
+                                    {% if component_node.spans_full_width %}
+                                        {{ component_node.display_value }}
+                                    {% else %}
+                                        <div class="submission-step-row__label">
+                                            {{ component_node.label }}
+                                        </div>
 
-                    {% for item in step %}
-                        <div class="submission-step-row {% if item.layout_modifier %}submission-step-row--{{ item.layout_modifier }}{% endif %}">
-
-                            <div class="submission-step-row__label">
-                                {{ item.label }}
-                            </div>
-
-                            <div class="submission-step-row__value">
-                                {{ item.display_value }}
-                            </div>
-
-                        </div>
-                    {% endfor %}
-                </div>
+                                        <div class="submission-step-row__value">
+                                            {{ component_node.display_value }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
             {% endfor %}
 
             {% if report.co_signer %}

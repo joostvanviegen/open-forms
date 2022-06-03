@@ -8,7 +8,12 @@ from mozilla_django_oidc_db.forms import OpenIDConnectConfigForm
 
 from openforms.forms.models import Form
 
-from .models import OpenIDConnectEHerkenningConfig, OpenIDConnectPublicConfig
+from .models import (
+    OpenIDConnectDigiDMachtigenConfig,
+    OpenIDConnectEHerkenningBewindvoeringConfig,
+    OpenIDConnectEHerkenningConfig,
+    OpenIDConnectPublicConfig,
+)
 
 OIDC_MAPPING = deepcopy(_OIDC_MAPPING)
 
@@ -57,4 +62,20 @@ class OpenIDConnectEHerkenningConfigForm(OpenIDConnectBaseConfigForm):
 
     class Meta:
         model = OpenIDConnectEHerkenningConfig
+        fields = "__all__"
+
+
+class OpenIDConnectDigiDMachtigenConfigForm(OpenIDConnectBaseConfigForm):
+    plugin_identifier = "digid_machtigen_oidc"
+
+    class Meta:
+        model = OpenIDConnectDigiDMachtigenConfig
+        fields = "__all__"
+
+
+class OpenIDConnectEHerkenningBewindvoeringConfigForm(OpenIDConnectBaseConfigForm):
+    plugin_identifier = "eherkenning_bewindvoering_oidc"
+
+    class Meta:
+        model = OpenIDConnectEHerkenningBewindvoeringConfig
         fields = "__all__"

@@ -139,6 +139,16 @@
     "description": "Auth plugin field label",
     "originalDefault": "Authentication"
   },
+  "6hApJ7": {
+    "defaultMessage": "Stay logged in",
+    "description": "Extend session button",
+    "originalDefault": "Stay logged in"
+  },
+  "6k14SS": {
+    "defaultMessage": "Key",
+    "description": "Variable table key title",
+    "originalDefault": "Key"
+  },
   "7/n6O+": {
     "defaultMessage": "This form has no versions.",
     "description": "No form version history message",
@@ -189,6 +199,11 @@
     "description": "Form step save text field help text",
     "originalDefault": "The text that will be displayed in the form step to save the current information. Leave blank to get value from global configuration."
   },
+  "8NbOpb": {
+    "defaultMessage": "Variables",
+    "description": "Variables tab title",
+    "originalDefault": "Variables"
+  },
   "8VqmbG": {
     "defaultMessage": "Type",
     "description": "JSON editor: 'type' header label",
@@ -203,6 +218,11 @@
     "defaultMessage": "Edit variable {name}",
     "description": "JSON editor: variable edit panel title",
     "originalDefault": "Edit variable {name}"
+  },
+  "91XY1Q": {
+    "defaultMessage": "Is not sensitive",
+    "description": "Is not sensitive icon title",
+    "originalDefault": "Is not sensitive"
   },
   "9N67XB": {
     "defaultMessage": "Invalid JSON syntax",
@@ -239,6 +259,11 @@
     "description": "Display main website link field label",
     "originalDefault": "Display main website link"
   },
+  "ADAp0E": {
+    "defaultMessage": "Please log in again to continue.",
+    "description": "Call to action to log in again",
+    "originalDefault": "Please log in again to continue."
+  },
   "AFyQut": {
     "defaultMessage": "is greater than",
     "description": "\">\" operator description",
@@ -273,6 +298,16 @@
     "defaultMessage": "Form",
     "description": "Form fields tab title",
     "originalDefault": "Form"
+  },
+  "BcuXrg": {
+    "defaultMessage": "Boolean",
+    "description": "data type boolean",
+    "originalDefault": "Boolean"
+  },
+  "Bl2NMf": {
+    "defaultMessage": "Static",
+    "description": "Static variables tab title",
+    "originalDefault": "Static"
   },
   "BrGg65": {
     "defaultMessage": "plus",
@@ -328,6 +363,11 @@
     "defaultMessage": "Move down",
     "description": "Move down icon title",
     "originalDefault": "Move down"
+  },
+  "DcI1VF": {
+    "defaultMessage": "Session expired",
+    "description": "Modal title session expired",
+    "originalDefault": "Session expired"
   },
   "Dwnqdq": {
     "defaultMessage": "Advanced Logic",
@@ -474,6 +514,11 @@
     "description": "JSON editor: \"interpolate\" variable source label",
     "originalDefault": "Text with (embedded) form field(s)"
   },
+  "ItH6EY": {
+    "defaultMessage": "Time",
+    "description": "data type time",
+    "originalDefault": "Time"
+  },
   "Iv+lBL": {
     "defaultMessage": "The text that will be displayed in the form step to go to the next step. Leave blank to get value from global configuration.",
     "description": "Form step next text field help text",
@@ -488,6 +533,11 @@
     "defaultMessage": "hidden",
     "description": "component property \"hidden\" label",
     "originalDefault": "hidden"
+  },
+  "JDD7PC": {
+    "defaultMessage": "Authentication failure",
+    "description": "Modal title API call failed with HTTP 401",
+    "originalDefault": "Authentication failure"
   },
   "JZRX+C": {
     "defaultMessage": "Successful Submissions Removal Limit",
@@ -569,10 +619,25 @@
     "description": "Formio component selection label",
     "originalDefault": "Component"
   },
+  "Mv8yjC": {
+    "defaultMessage": "Form variables configuration",
+    "description": "Form variables configuration editor fieldset title",
+    "originalDefault": "Form variables configuration"
+  },
+  "MzMXRd": {
+    "defaultMessage": "Prefill attribute",
+    "description": "Variable table prefill attribute title",
+    "originalDefault": "Prefill attribute"
+  },
   "NE5h2q": {
     "defaultMessage": "Description",
     "description": "Description column header",
     "originalDefault": "Description"
+  },
+  "NJ3Psx": {
+    "defaultMessage": "Your session has expired.",
+    "description": "Session expiry notice - expired",
+    "originalDefault": "Your session has expired."
   },
   "NwTdLM": {
     "defaultMessage": "Component where locations for an appointment will be shown",
@@ -594,10 +659,20 @@
     "description": "Form registration options tab title",
     "originalDefault": "Registration"
   },
+  "OX8wxE": {
+    "defaultMessage": "Your session is about to expire {delta}. Extend your session if you wish to continue.",
+    "description": "Session expiry warning (in modal)",
+    "originalDefault": "Your session is about to expire {delta}. Extend your session if you wish to continue."
+  },
   "OvqnXR": {
     "defaultMessage": "Yes",
     "description": "Component property boolean value \"true\"",
     "originalDefault": "Yes"
+  },
+  "P/njxS": {
+    "defaultMessage": "Datetime",
+    "description": "data type datetime",
+    "originalDefault": "Datetime"
   },
   "P3oGZG": {
     "defaultMessage": "Save and add another",
@@ -669,10 +744,20 @@
     "description": "Form name field help text",
     "originalDefault": "Internal name/title of the form"
   },
+  "Rk13i+": {
+    "defaultMessage": "Initial value",
+    "description": "Variable table initial value title",
+    "originalDefault": "Initial value"
+  },
   "S6eF5o": {
     "defaultMessage": "Data removal",
     "description": "Data removal tab title",
     "originalDefault": "Data removal"
+  },
+  "S94ET7": {
+    "defaultMessage": "Session expires {expiresToday, select, true {{relativeTimeToExpiry}} other {on {expiryDate} at {expiryTime}}}",
+    "description": "Session expiry notice",
+    "originalDefault": "Session expires {expiresToday, select, true {{relativeTimeToExpiry}} other {on {expiryDate} at {expiryTime}}}"
   },
   "SX2HTA": {
     "defaultMessage": "change a property of a component.",
@@ -684,6 +769,11 @@
     "description": "JSON editor: add object key-value pair button",
     "originalDefault": "Add key-value pair"
   },
+  "TB/ku3": {
+    "defaultMessage": "Add variable",
+    "description": "Add user defined variable button label",
+    "originalDefault": "Add variable"
+  },
   "TCQic2": {
     "defaultMessage": "Confirm text",
     "description": "literals.confirmText form label",
@@ -693,6 +783,11 @@
     "defaultMessage": "ID",
     "description": "Form ID field label",
     "originalDefault": "ID"
+  },
+  "TFxv38": {
+    "defaultMessage": "Back to login",
+    "description": "Session status modal close button",
+    "originalDefault": "Back to login"
   },
   "TR5xSY": {
     "defaultMessage": "Are you sure you want to delete this rule?",
@@ -744,6 +839,11 @@
     "description": "component property \"required\" label",
     "originalDefault": "required"
   },
+  "Vsgunp": {
+    "defaultMessage": "Sensitive data",
+    "description": "Variable table sensitive data title",
+    "originalDefault": "Sensitive data"
+  },
   "WHqkYA": {
     "defaultMessage": "Date/time",
     "description": "Date/time column header",
@@ -758,6 +858,11 @@
     "defaultMessage": "Logic",
     "description": "Form logic tab title",
     "originalDefault": "Logic"
+  },
+  "WjDh7l": {
+    "defaultMessage": "Prefill plugin",
+    "description": "Variable table prefill plugin title",
+    "originalDefault": "Prefill plugin"
   },
   "Wz5QZo": {
     "defaultMessage": "Active",
@@ -824,6 +929,16 @@
     "description": "Form step login required label",
     "originalDefault": "Login required?"
   },
+  "b9D64D": {
+    "defaultMessage": "Is sensitive",
+    "description": "Is sensitive icon title",
+    "originalDefault": "Is sensitive"
+  },
+  "bDjeSb": {
+    "defaultMessage": "Array",
+    "description": "data type array",
+    "originalDefault": "Array"
+  },
   "bRe/yq": {
     "defaultMessage": "There are validation errors",
     "description": "Tab validation errors icon title",
@@ -833,6 +948,11 @@
     "defaultMessage": "Move up",
     "description": "Move up icon title",
     "originalDefault": "Move up"
+  },
+  "c1XyJ4": {
+    "defaultMessage": "Component",
+    "description": "Component variables tab title",
+    "originalDefault": "Component"
   },
   "cDbGU2": {
     "defaultMessage": "Incomplete Submissions Removal Limit",
@@ -858,6 +978,11 @@
     "defaultMessage": "Content that will be shown on the start page of the form, below the title and above the log in text.",
     "description": "Start page explanation text",
     "originalDefault": "Content that will be shown on the start page of the form, below the title and above the log in text."
+  },
+  "cpJErE": {
+    "defaultMessage": "Integer",
+    "description": "data type int",
+    "originalDefault": "Integer"
   },
   "cpiYVw": {
     "defaultMessage": "No email",
@@ -889,6 +1014,11 @@
     "description": "Progress indicator field label",
     "originalDefault": "Show progress indicator"
   },
+  "dgwRIk": {
+    "defaultMessage": "String",
+    "description": "data type string",
+    "originalDefault": "String"
+  },
   "eBk+W0": {
     "defaultMessage": "Manage process variables",
     "description": "Camunda process var selection modal title",
@@ -914,15 +1044,30 @@
     "description": "Incomplete Submissions Removal Limit help text",
     "originalDefault": "Amount of days incomplete submissions of this form will remain before being removed. Leave blank to use value in General Configuration."
   },
+  "fLCWjk": {
+    "defaultMessage": "Name",
+    "description": "Variable table name title",
+    "originalDefault": "Name"
+  },
   "fLHOey": {
     "defaultMessage": "Pricing logic",
     "description": "Dynamic pricing fieldset title",
     "originalDefault": "Pricing logic"
   },
+  "fWcg7I": {
+    "defaultMessage": "Object",
+    "description": "data type object",
+    "originalDefault": "Object"
+  },
   "ftzF/n": {
     "defaultMessage": "When",
     "description": "Logic trigger prefix",
     "originalDefault": "When"
+  },
+  "g+ppJj": {
+    "defaultMessage": "Do nothing",
+    "description": "Session expiry warning \"do nothing\" button",
+    "originalDefault": "Do nothing"
   },
   "gGNIdG": {
     "defaultMessage": "The text that will be displayed in the overview page to go to the previous step. Leave blank to get value from global configuration.",
@@ -959,6 +1104,11 @@
     "description": "Manage complex process vars enabled checkbox column title",
     "originalDefault": "Enabled"
   },
+  "hefA1X": {
+    "defaultMessage": "Are you sure you want to delete this variable?",
+    "description": "User defined variable deletion confirm message",
+    "originalDefault": "Are you sure you want to delete this variable?"
+  },
   "huHjRm": {
     "defaultMessage": "Configure",
     "description": "Manage complex process vars configure column title",
@@ -968,6 +1118,11 @@
     "defaultMessage": "Internal name",
     "description": "Form name field label",
     "originalDefault": "Internal name"
+  },
+  "iR6Mt9": {
+    "defaultMessage": "Data format",
+    "description": "Variable table data format title",
+    "originalDefault": "Data format"
   },
   "iZESbd": {
     "defaultMessage": "is less than",
@@ -1008,6 +1163,11 @@
     "defaultMessage": "No",
     "description": "Component property boolean value \"false\"",
     "originalDefault": "No"
+  },
+  "jo1PVg": {
+    "defaultMessage": "Session will expire",
+    "description": "Model title session expiry warning",
+    "originalDefault": "Session will expire"
   },
   "k34Vke": {
     "defaultMessage": "Then",
@@ -1134,6 +1294,11 @@
     "description": "Form step name label",
     "originalDefault": "Step name"
   },
+  "pown36": {
+    "defaultMessage": "Form definition",
+    "description": "Variable table form definition title",
+    "originalDefault": "Form definition"
+  },
   "pyX2Tl": {
     "defaultMessage": "Confirm",
     "description": "Confirm complex Camunda variable definition",
@@ -1168,6 +1333,21 @@
     "defaultMessage": "the field",
     "description": "\"component\" operand type",
     "originalDefault": "the field"
+  },
+  "rF90xM": {
+    "defaultMessage": "Data type",
+    "description": "Variable table data type title",
+    "originalDefault": "Data type"
+  },
+  "rTafvA": {
+    "defaultMessage": "Float",
+    "description": "data type float",
+    "originalDefault": "Float"
+  },
+  "rZfe8Z": {
+    "defaultMessage": "Sorry, we couldn't do that because you are logged out - this may be because your session expired.",
+    "description": "Session expiry notice - API call failed with 401",
+    "originalDefault": "Sorry, we couldn't do that because you are logged out - this may be because your session expired."
   },
   "t99ynC": {
     "defaultMessage": "Component where the last name should be entered",
@@ -1288,6 +1468,11 @@
     "defaultMessage": "Action",
     "description": "Action column header",
     "originalDefault": "Action"
+  },
+  "zGMQ75": {
+    "defaultMessage": "User defined",
+    "description": "User defined variables tab title",
+    "originalDefault": "User defined"
   },
   "zLTTBw": {
     "defaultMessage": "Component where dates for an appointment will be shown",

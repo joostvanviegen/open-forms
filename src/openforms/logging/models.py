@@ -63,8 +63,7 @@ class TimelineLogProxy(TimelineLog):
             auth = self.content_object.get_auth_mode_display()
             if auth:
                 return _("Authenticated via plugin {auth}").format(auth=auth)
-        else:
-            return gettext("Anonymous user")
+        return gettext("Anonymous user")
 
     @property
     def fmt_form(self) -> str:
@@ -131,6 +130,13 @@ class TimelineLogProxy(TimelineLog):
             f"admin:{ct.app_label}_{ct.model}_change", args=(self.object_id,)
         )
 
+    @property
+    def fmt_submission_registration_attempts(self):
+        if self.is_submission:
+            return self.content_object.registration_attempts
+        else:
+            return ""
+
     def content_admin_link(self) -> str:
         if not (url := self.content_admin_url):
             return ""
@@ -144,6 +150,13 @@ class TimelineLogProxy(TimelineLog):
 
     message.short_description = _("message")
 
+    @property
+    def event(self):
+        if not self.extra_data:
+            return None
+        else:
+            return self.extra_data.get("log_event", None)
+
 
 class AVGTimelineLogProxyManager(models.Manager):
     def get_queryset(self):
@@ -153,7 +166,6 @@ class AVGTimelineLogProxyManager(models.Manager):
 
 
 class AVGTimelineLogProxy(TimelineLogProxy):
-
     objects = AVGTimelineLogProxyManager()
 
     class Meta:

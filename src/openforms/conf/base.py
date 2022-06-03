@@ -138,6 +138,7 @@ INSTALLED_APPS = [
     # External applications.
     "axes",
     "capture_tag",
+    "colorfield",
     "cookie_consent",
     "corsheaders",
     "django_better_admin_arrayfield",
@@ -174,6 +175,7 @@ INSTALLED_APPS = [
     "openforms.emails",
     "openforms.formio",
     "openforms.formio.formatters.apps.FormIOFormattersApp",
+    "openforms.formio.rendering",
     "openforms.forms",
     "openforms.multidomain",
     "openforms.products",
@@ -217,7 +219,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "openforms.middleware.SameSiteNoneCookieMiddlware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     # 'django.middleware.locale.LocaleMiddleware',
     "corsheaders.middleware.CorsMiddleware",
@@ -232,7 +233,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "axes.middleware.AxesMiddleware",
     "csp.contrib.rate_limiting.RateLimitedCSPMiddleware",
-    "csp.middleware.CSPMiddleware",
+    # note: UpdateCSPMiddleware sets data on the **response** for use by RateLimitedCSPMiddleware, so has to come after
+    "openforms.utils.middleware.UpdateCSPMiddleware",
 ]
 
 ROOT_URLCONF = "openforms.urls"
@@ -290,10 +292,12 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 # Additional locations of static files
 STATICFILES_DIRS = [
     os.path.join(DJANGO_PROJECT_DIR, "static"),
-    # font-awesome fonts from formio
+    # font-awesome fonts
     (
-        "bundles/fonts",
-        os.path.join(BASE_DIR, "node_modules", "formiojs", "dist", "fonts"),
+        "fonts",
+        os.path.join(
+            BASE_DIR, "node_modules", "@fortawesome", "fontawesome-free", "webfonts"
+        ),
     ),
 ]
 
@@ -461,8 +465,10 @@ LOGOUT_REDIRECT_URL = reverse_lazy("admin:index")
 #
 SESSION_COOKIE_SECURE = IS_HTTPS
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = (
-    None  # from Lax -> None to enable the SDK to send CORS requests
+# set same-site attribute to None to allow emdedding the SDK for making cross domain
+# requests.
+SESSION_COOKIE_SAMESITE = config(
+    "SESSION_COOKIE_SAMESITE", default="None" if IS_HTTPS else "Lax"
 )
 
 CSRF_COOKIE_SECURE = IS_HTTPS
@@ -503,6 +509,12 @@ with open(os.path.join(BASE_DIR, ".sdk-release"), "r") as sdk_release_file:
 
 SDK_RELEASE = config("SDK_RELEASE", default=sdk_release_default)
 
+NUM_PROXIES = config(
+    "NUM_PROXIES",
+    default=1,
+    cast=lambda val: int(val) if val is not None else None,
+)
+
 BASE_URL = config("BASE_URL", "https://open-forms.test.maykin.opengem.nl")
 
 # Submission download: how long-lived should the one-time URL be:
@@ -512,6 +524,9 @@ SUBMISSION_REPORT_URL_TOKEN_TIMEOUT_DAYS = config(
 TEMPORARY_UPLOADS_REMOVED_AFTER_DAYS = config(
     "TEMPORARY_UPLOADS_REMOVED_AFTER_DAYS", default=2
 )
+
+# Zip files for file exports: after how long should they be deleted
+FORMS_EXPORT_REMOVED_AFTER_DAYS = config("FORMS_EXPORT_REMOVED_AFTER_DAYS", default=7)
 
 # a custom default timeout for the requests library, added via monkeypatch in
 # :mod:`openforms.setup`. Value is in seconds.
@@ -545,6 +560,8 @@ AXES_FAILURE_LIMIT = 10
 # will be forgotten. Can be set to a python timedelta object or an integer. If
 # an integer, will be interpreted as a number of hours. Default: None
 AXES_COOLOFF_TIME = 1
+# The number of reverse proxies
+AXES_PROXY_COUNT = NUM_PROXIES - 1 if NUM_PROXIES else None
 # If True only locks based on user id and never locks by IP if attempts limit
 # exceed, otherwise utilize the existing IP and user locking logic Default:
 # False
@@ -618,6 +635,10 @@ CELERY_BEAT_SCHEDULE = {
     "cleanup_csp_reports": {
         "task": "openforms.utils.tasks.cleanup_csp_reports",
         "schedule": crontab(hour=4),
+    },
+    "clear-forms-exports": {
+        "task": "openforms.forms.admin.tasks.clear_forms_export",
+        "schedule": crontab(hour=0, minute=0, day_of_week="sunday"),
     },
 }
 
@@ -733,11 +754,7 @@ REST_FRAMEWORK = {
     },
     # required to get the right IP addres for throttling depending on the amount of
     # reverse proxies (X-Forwarded-For).
-    "NUM_PROXIES": config(
-        "NUM_PROXIES",
-        default=1,
-        cast=lambda val: int(val) if val is not None else None,
-    ),
+    "NUM_PROXIES": NUM_PROXIES,
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
     "DEFAULT_SCHEMA_CLASS": "openforms.api.schema.AutoSchema",
     "EXCEPTION_HANDLER": "openforms.api.views.exception_handler",
@@ -763,7 +780,7 @@ Open Forms fits in the [Common Ground](https://commonground.nl) vision and archi
 and it plays nice with other available components.
 """
 
-API_VERSION = "1.0.0"
+API_VERSION = "1.1.0"
 
 SPECTACULAR_SETTINGS = {
     "SCHEMA_PATH_PREFIX": "/api/v1",
@@ -878,6 +895,7 @@ EHERKENNING_SIGNATURE_ALGORITHM = config(
 EHERKENNING_SERVICE_INDEX = config("EHERKENNING_SERVICE_INDEX", "1")
 EHERKENNING_SERVICE_UUID = config("EHERKENNING_SERVICE_UUID", "")
 EHERKENNING_SERVICE_INSTANCE_UUID = config("EHERKENNING_SERVICE_INSTANCE_UUID", "")
+EHERKENNING_CONTENT_TYPE = config("EHERKENNING_CONTENT_TYPE", "")
 
 EIDAS_SERVICE_INDEX = config("EIDAS_SERVICE_INDEX", "2")
 EIDAS_SERVICE_UUID = config("EIDAS_SERVICE_UUID", "")
@@ -894,6 +912,7 @@ EHERKENNING = {
     "service_entity_id": EHERKENNING_SERVICE_ENTITY_ID,
     "entity_id": EHERKENNING_ENTITY_ID,
     "oin": EHERKENNING_OIN,
+    "artifact_resolve_content_type": EHERKENNING_CONTENT_TYPE,
     "services": [
         {
             "attribute_consuming_service_index": EHERKENNING_SERVICE_INDEX,

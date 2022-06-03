@@ -1,15 +1,20 @@
-from django.core.validators import MaxValueValidator, MinValueValidator
+from collections import defaultdict
+
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.template import Context, Template
 from django.template.loader import render_to_string
 from django.utils.encoding import force_str
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
+from colorfield.fields import ColorField
 from django_better_admin_arrayfield.models.fields import ArrayField
 from glom import glom
 from solo.models import SingletonModel
 from tinymce.models import HTMLField
 
+from openforms.config.constants import CSPDirective
 from openforms.data_removal.constants import RemovalMethods
 from openforms.emails.validators import URLSanitationValidator
 from openforms.payments.validators import validate_payment_order_id_prefix
@@ -196,8 +201,8 @@ class GlobalConfiguration(SingletonModel):
     # the configuration of the values of available design tokens, following the
     # format outlined in https://github.com/amzn/style-dictionary#design-tokens which
     # is used by NLDS.
-    # TODO: specify a serializer describing the supported design parameters to use for
-    # validation.
+    # TODO: validate against the JSON build from @open-formulieren/design-tokens for
+    # available tokens.
     # Example:
     # {
     #   "of": {
@@ -209,11 +214,6 @@ class GlobalConfiguration(SingletonModel):
     #   }
     # }
     #
-    # TODO: later on, we should have the ability to include a dist/index.css file containing
-    # the municipality styles. This would then allow us to use references to existing design
-    # tokens or even have the OF-specific design tokens included in the municipality dist
-    # already, see for example https://unpkg.com/@utrecht/design-tokens@1.0.0-alpha.20/dist/index.css
-
     design_token_values = models.JSONField(
         _("design token values"),
         blank=True,
@@ -223,6 +223,29 @@ class GlobalConfiguration(SingletonModel):
             "colors... Note that this is advanced usage. Any available but un-specified "
             "values will use fallback default values. See https://open-forms.readthedocs.io/en/latest"
             "/installation/form_hosting.html#run-time-configuration for documentation."
+        ),
+    )
+
+    theme_classname = models.SlugField(
+        _("theme CSS class name"),
+        blank=True,
+        help_text=_("If provided, this class name will be set on the <html> element."),
+    )
+    theme_stylesheet = models.URLField(
+        _("theme stylesheet URL"),
+        blank=True,
+        max_length=1000,
+        validators=[
+            RegexValidator(
+                regex=r"\.css$",
+                message=_("The URL must point to a CSS resource (.css extension)."),
+            ),
+        ],
+        help_text=_(
+            "The URL stylesheet with theme-specific rules for your organization. "
+            "This will be included as final stylesheet, overriding previously defined styles. "
+            "Note that you also have to include the host to the `style-src` CSP directive. "
+            "Example value: https://unpkg.com/@utrecht/design-tokens@1.0.0-alpha.20/dist/index.css."
         ),
     )
 
@@ -436,6 +459,15 @@ class GlobalConfiguration(SingletonModel):
         help_text=_("Amount of days when all submissions will be permanently deleted"),
     )
 
+    registration_attempt_limit = models.PositiveIntegerField(
+        _("default registration backend attempt limit"),
+        default=5,
+        validators=[MinValueValidator(1)],
+        help_text=_(
+            "How often we attempt to register the submission at the registration backend before giving up"
+        ),
+    )
+
     plugin_configuration = models.JSONField(
         _("plugin configuration"),
         blank=True,
@@ -444,6 +476,11 @@ class GlobalConfiguration(SingletonModel):
             "Configuration of plugins for authentication, payments, prefill, "
             "registrations and validation"
         ),
+    )
+    enable_form_variables = models.BooleanField(
+        _("enable form variables"),
+        default=False,
+        help_text=_("Whether to enable form variables in the form builder."),
     )
 
     class Meta:
@@ -464,6 +501,14 @@ class GlobalConfiguration(SingletonModel):
     def siteimprove_enabled(self) -> bool:
         return bool(self.siteimprove_id)
 
+    def get_csp_updates(self):
+        updates = defaultdict(list)
+        if self.siteimprove_enabled:
+            updates["default-src"].append("siteimproveanalytics.com")
+            updates["img-src"].append("*.siteimproveanalytics.io")
+        # TODO support more contributions
+        return updates
+
     def render_privacy_policy_label(self):
         template = self.privacy_policy_label
         rendered_content = Template(template).render(Context({}))
@@ -477,3 +522,61 @@ class GlobalConfiguration(SingletonModel):
             default=True,
         )
         return enabled
+
+
+class RichTextColor(models.Model):
+    color = ColorField(
+        _("color"),
+        format="hex",
+        help_text=_("Color in RGB hex format (#RRGGBB)"),
+    )
+    label = models.CharField(
+        _("label"),
+        max_length=64,
+        help_text=_("Human readable label for reference"),
+    )
+
+    class Meta:
+        verbose_name = _("text editor color preset")
+        verbose_name_plural = _("text editor color presets")
+        ordering = ("label",)
+
+    def __str__(self):
+        return f"{self.label} ({self.color})"
+
+    def example(self):
+        return mark_safe(
+            f'<span style="background-color: {self.color};">&nbsp; &nbsp; &nbsp;</span>'
+        )
+
+    example.short_description = _("Example")
+
+
+class CSPSettingQuerySet(models.QuerySet):
+    def as_dict(self):
+        ret = defaultdict(set)
+        for directive, value in self.values_list("directive", "value"):
+            ret[directive].add(value)
+        return {k: list(v) for k, v in ret.items()}
+
+
+class CSPSetting(models.Model):
+    directive = models.CharField(
+        _("directive"),
+        max_length=64,
+        help_text=_("CSP header directive"),
+        choices=CSPDirective.choices,
+    )
+    value = models.CharField(
+        _("value"),
+        max_length=128,
+        help_text=_("CSP header value"),
+    )
+
+    objects = CSPSettingQuerySet.as_manager()
+
+    class Meta:
+        ordering = ("directive", "value")
+
+    def __str__(self):
+        return f"{self.directive} '{self.value}'"

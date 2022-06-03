@@ -62,6 +62,10 @@
             ],
             [
                 "forms",
+                "formvariable"
+            ],
+            [
+                "forms",
                 "formversion"
             ]
         ]
@@ -128,6 +132,10 @@
             ],
             [
                 "config",
+                "cspsetting"
+            ],
+            [
+                "config",
                 "globalconfiguration"
             ],
             [
@@ -143,20 +151,28 @@
                 "familymemberstypeconfig"
             ],
             [
-                "django_camunda",
-                "camundaconfig"
+                "digid_eherkenning_oidc_generics",
+                "openidconnectdigidmachtigenconfig"
             ],
             [
-                "django_yubin",
-                "blacklist"
+                "digid_eherkenning_oidc_generics",
+                "openidconnecteherkenningbewindvoeringconfig"
+            ],
+            [
+                "digid_eherkenning_oidc_generics",
+                "openidconnecteherkenningconfig"
             ],
             [
                 "digid_eherkenning_oidc_generics",
                 "openidconnectpublicconfig"
             ],
             [
-                "digid_eherkenning_oidc_generics",
-                "openidconnecteherkenningconfig"
+                "django_camunda",
+                "camundaconfig"
+            ],
+            [
+                "django_yubin",
+                "blacklist"
             ],
             [
                 "multidomain",
@@ -172,15 +188,15 @@
             ],
             [
                 "zgw_consumers",
+                "certificate"
+            ],
+            [
+                "zgw_consumers",
                 "nlxconfig"
             ],
             [
                 "zgw_consumers",
                 "service"
-            ],
-            [
-                "zgw_consumers",
-                "certificate"
             ]
         ]
     }

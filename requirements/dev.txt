@@ -165,7 +165,7 @@ defusedxml==0.6.0
     #   django-camunda
     #   django-digid-eherkenning
     #   python3-saml
-django==3.2.12
+django==3.2.13
     # via
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
@@ -247,6 +247,10 @@ django-choices==1.7.1
     #   -r requirements/ci.txt
     #   django-digid-eherkenning
     #   zgw-consumers
+django-colorfield==0.7.0
+    # via
+    #   -c requirements/ci.txt
+    #   -r requirements/ci.txt
 django-cookie-consent==0.3.1
     # via
     #   -c requirements/ci.txt
@@ -269,7 +273,7 @@ django-decorator-include==3.0
     # via
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
-django-digid-eherkenning==0.3.0
+django-digid-eherkenning==0.3.1
     # via
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
@@ -342,7 +346,7 @@ django-solo==2.0.0
     #   django-camunda
     #   mozilla-django-oidc-db
     #   zgw-consumers
-django-timeline-logger==2.0.0
+django-timeline-logger==2.1.0
     # via
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
@@ -448,6 +452,7 @@ glom==20.11.0
     # via
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
+    #   mozilla-django-oidc-db
 gprof2dot==2021.2.21
     # via django-silk
 html5lib==1.1
@@ -481,7 +486,7 @@ iniconfig==1.1.1
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
     #   pytest
-isodate==0.6.0
+isodate==0.6.1
     # via
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
@@ -518,7 +523,7 @@ lockfile==0.12.2
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
     #   django-yubin
-lxml==4.7.1
+lxml==4.6.5
     # via
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
@@ -561,7 +566,7 @@ mozilla-django-oidc==1.2.4
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
     #   mozilla-django-oidc-db
-mozilla-django-oidc-db @ git+https://github.com/maykinmedia/mozilla-django-oidc-db.git@0e8bc4f3d0437eaf01c3e0885f03e28450ced83c
+mozilla-django-oidc-db==0.10.0
     # via
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
@@ -616,6 +621,7 @@ pillow==9.0.1
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
     #   cairosvg
+    #   django-colorfield
     #   weasyprint
 pip-tools==6.5.1
     # via -r requirements/dev.in
@@ -650,7 +656,6 @@ psycopg2==2.8.6
     # via
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
-    #   mozilla-django-oidc-db
 py==1.10.0
     # via
     #   -c requirements/ci.txt
@@ -732,7 +737,7 @@ python-dotenv==0.14.0
     # via
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
-python3-saml @ git+https://github.com/maykinmedia/python3-saml.git@e000b39ed0ce38270e6351ec6634e6b3a53bbc3d
+python3-saml @ git+https://github.com/maykinmedia/python3-saml.git@f587f77b78be79d51139f29a957b406072e2b537
     # via
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
@@ -937,6 +942,10 @@ tablib[xlsx]==3.0.0
     # via
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
+tabulate==0.8.9
+    # via
+    #   -c requirements/ci.txt
+    #   -r requirements/ci.txt
 tblib==1.7.0
     # via
     #   -c requirements/ci.txt
@@ -996,7 +1005,7 @@ urllib3==1.26.6
     #   elastic-apm
     #   requests
     #   sentry-sdk
-uwsgi==2.0.19.1
+uwsgi==2.0.20
     # via
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
@@ -1053,7 +1062,7 @@ zeep==4.1.0
     # via
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt
-zgw-consumers==0.18.0
+zgw-consumers==0.18.1
     # via
     #   -c requirements/ci.txt
     #   -r requirements/ci.txt

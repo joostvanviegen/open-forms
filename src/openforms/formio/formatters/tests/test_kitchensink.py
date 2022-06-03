@@ -1,6 +1,5 @@
 from django.utils.translation import gettext as _
 
-from openforms.emails.templatetags.form_summary import display_value
 from openforms.submissions.tests.factories import (
     SubmissionFactory,
     SubmissionFileAttachmentFactory,
@@ -8,8 +7,21 @@ from openforms.submissions.tests.factories import (
 
 from ...utils import iter_components
 from ..printable import filter_printable
+from ..service import format_value
 from .mixins import BaseFormatterTestCase
 from .utils import load_json
+
+
+def _get_printable_data(submission):
+    printable_data = []
+    for key, (
+        component,
+        value,
+    ) in submission.get_ordered_data_with_component_type().items():
+        printable_data.append(
+            (component["label"], format_value(component, value, as_html=False))
+        )
+    return printable_data
 
 
 class KitchensinkFormatterTestCase(BaseFormatterTestCase):
@@ -81,21 +93,12 @@ class KitchensinkFormatterTestCase(BaseFormatterTestCase):
             submission_step=submission_step,
         )
 
-        printable_data = submission.get_printable_data()
+        printable_data = _get_printable_data(submission)
 
         # check if we have something for all components
         self.assertEqual(set(d[0] for d in printable_data), expected_labels)
 
-        text_values = dict()
-        for label, value in printable_data:
-            text_values[label] = display_value({"rendering_text": True}, value)
-
-        html_values = dict()
-        for label, value in printable_data:
-            html_values[label] = display_value({"rendering_text": False}, value)
-
-        # check if text and html values are same
-        self.assertEqual(text_values, html_values)
+        text_values = dict(printable_data)
 
         for label, value in text_printed.items():
             with self.subTest(f"{label} -> '{value}'"):
@@ -115,18 +118,8 @@ class KitchensinkFormatterTestCase(BaseFormatterTestCase):
             configuration["components"], submitted_data=data, completed=True
         )
 
-        printable_data = submission.get_printable_data()
-
-        text_values = dict()
-        for label, value in printable_data:
-            text_values[label] = display_value({"rendering_text": True}, value)
-
-        html_values = dict()
-        for label, value in printable_data:
-            html_values[label] = display_value({"rendering_text": False}, value)
-
-        # check if text and html values are same
-        self.assertEqual(text_values, html_values)
+        printable_data = _get_printable_data(submission)
+        text_values = dict(printable_data)
 
         for label, value in text_printed.items():
             with self.subTest(f"{label} -> '{value}'"):

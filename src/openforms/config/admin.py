@@ -5,7 +5,7 @@ from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 from solo.admin import SingletonModelAdmin
 
 from .forms import GlobalConfigurationAdminForm
-from .models import GlobalConfiguration
+from .models import CSPSetting, GlobalConfiguration, RichTextColor
 
 
 @admin.register(GlobalConfiguration)
@@ -63,6 +63,8 @@ class GlobalConfigurationAdmin(DynamicArrayMixin, SingletonModelAdmin):
                 "fields": (
                     "logo",
                     "main_website",
+                    "theme_classname",
+                    "theme_stylesheet",
                     "design_token_values",
                 ),
             },
@@ -137,7 +139,40 @@ class GlobalConfigurationAdmin(DynamicArrayMixin, SingletonModelAdmin):
                     "default_test_kvk",
                     "allow_empty_initiator",
                     "payment_order_id_prefix",
+                    "enable_form_variables",
                 ),
             },
         ),
     )
+
+
+@admin.register(RichTextColor)
+class RichTextColorAdmin(admin.ModelAdmin):
+    fields = [
+        "label",
+        "color",
+    ]
+    list_display = [
+        "label",
+        "example",
+        "color",
+    ]
+
+
+@admin.register(CSPSetting)
+class CSPSettingAdmin(admin.ModelAdmin):
+    fields = [
+        "directive",
+        "value",
+    ]
+    list_display = [
+        "directive",
+        "value",
+    ]
+    list_filter = [
+        "directive",
+    ]
+    search_fields = [
+        "directive",
+        "value",
+    ]

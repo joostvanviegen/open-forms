@@ -10,6 +10,7 @@ import BsnField from './components/form/bsn';
 import PostcodeField from './components/form/postcode';
 import FileField from './components/form/file';
 import SelectField from './components/form/select';
+import InformatieObjectTypeSelectField from './components/form/iotype-select';
 import RadioField from './components/form/radio';
 import SelectBoxesField from './components/form/selectBoxes';
 import EmailField from './components/form/email';
@@ -22,6 +23,8 @@ import CoSignField from './components/form/coSign';
 import NpFamilyMembers from './components/form/np-family-members';
 import ColumnField from './components/form/columns';
 import WebformBuilder from './components/formio_builder/WebformBuilder';
+import ContentField from './components/form/content';
+import CurrencyField from './components/form/currency';
 
 const FormIOModule = {
   components: {
@@ -38,6 +41,7 @@ const FormIOModule = {
     postcode: PostcodeField,
     file: FileField,
     select: SelectField,
+    iotypeSelect: InformatieObjectTypeSelectField,
     radio: RadioField,
     selectboxes: SelectBoxesField,
     email: EmailField,
@@ -48,10 +52,12 @@ const FormIOModule = {
     coSign: CoSignField,
     npFamilyMembers: NpFamilyMembers,
     columns: ColumnField,
+    content: ContentField,
+    currency: CurrencyField,
   },
   builders: {
     webform: WebformBuilder,
-  }
+  },
 };
 
 export default FormIOModule;

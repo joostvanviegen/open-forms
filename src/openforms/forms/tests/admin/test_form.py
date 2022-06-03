@@ -4,7 +4,7 @@ from unittest.mock import patch
 from zipfile import ZipFile
 
 from django.contrib import admin
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
@@ -12,6 +12,7 @@ from django_webtest import WebTest
 
 from openforms.accounts.tests.factories import SuperUserFactory, UserFactory
 from openforms.config.models import GlobalConfiguration
+from openforms.submissions.tests.form_logic.factories import FormLogicFactory
 from openforms.tests.utils import disable_2fa
 from openforms.utils.admin import SubmitActions
 
@@ -55,10 +56,11 @@ class FormAdminImportExportTests(WebTest):
         form_steps = json.loads(zf.read("formSteps.json"))
         self.assertEqual(len(form_steps), 0)
 
+    @override_settings(LANGUAGE_CODE="en")
     def test_form_admin_import_button(self):
         response = self.app.get(reverse("admin:forms_form_changelist"), user=self.user)
 
-        response = response.click(_("Import form"))
+        response = response.click(href=reverse("admin:forms_import"))
 
         self.assertEqual(response.status_code, 200)
 
@@ -178,6 +180,7 @@ class FormAdminImportExportTests(WebTest):
             )
         )
 
+    @override_settings(LANGUAGE_CODE="en")
     def test_form_admin_import_warning_created_form_definitions(self):
         form = FormFactory.create(slug="test")
         form_definition = FormDefinitionFactory.create(slug="testform")
@@ -279,7 +282,7 @@ class FormAdminImportExportTests(WebTest):
         )
 
         success_message = response.html.find("li", {"class": "success"})
-        self.assertEqual(success_message.text, _("Form successfully imported"))
+        self.assertEqual(success_message.text, _("Form successfully imported!"))
 
         self.assertEqual(Form.objects.count(), 2)
 
@@ -307,6 +310,9 @@ class FormAdminCopyTests(TestCase):
             authentication_backends=["digid"], internal_name="internal"
         )
         form_step = FormStepFactory.create(form=form, form_definition__is_reusable=True)
+        logic = FormLogicFactory.create(
+            form=form,
+        )
         admin_url = reverse("admin:forms_form_change", args=(form.pk,))
 
         # React UI renders this input, so simulate it in a raw POST call
@@ -324,6 +330,11 @@ class FormAdminCopyTests(TestCase):
         )
         self.assertEqual(copied_form.authentication_backends, ["digid"])
 
+        copied_logic = copied_form.formlogic_set.get()
+        self.assertEqual(copied_logic.json_logic_trigger, logic.json_logic_trigger)
+        self.assertEqual(copied_logic.actions, logic.actions)
+        self.assertNotEqual(copied_logic.pk, logic.pk)
+
         copied_form_step = FormStep.objects.all().order_by("pk").last()
         self.assertNotEqual(copied_form_step.uuid, form_step.uuid)
         self.assertEqual(copied_form_step.form, copied_form)
@@ -339,6 +350,9 @@ class FormAdminActionsTests(WebTest):
         self.user = SuperUserFactory.create(app=self.app)
 
     def test_make_copies_action_makes_copy_of_a_form(self):
+        logic = FormLogicFactory.create(
+            form=self.form,
+        )
         response = self.app.get(reverse("admin:forms_form_changelist"), user=self.user)
 
         html_form = response.forms["changelist-form"]
@@ -352,6 +366,11 @@ class FormAdminActionsTests(WebTest):
             copied_form.name, _("{name} (copy)").format(name=self.form.name)
         )
         self.assertEqual(copied_form.slug, _("{slug}-copy").format(slug=self.form.slug))
+
+        copied_logic = copied_form.formlogic_set.get()
+        self.assertEqual(copied_logic.json_logic_trigger, logic.json_logic_trigger)
+        self.assertEqual(copied_logic.actions, logic.actions)
+        self.assertNotEqual(copied_logic.pk, logic.pk)
 
     def test_set_to_maintenance_mode_sets_form_maintenance_mode_field_to_True(self):
         response = self.app.get(reverse("admin:forms_form_changelist"), user=self.user)
@@ -379,6 +398,53 @@ class FormAdminActionsTests(WebTest):
 
         self.form.refresh_from_db()
         self.assertFalse(self.form.maintenance_mode)
+
+    def test_export_multiple_forms(self):
+        user = UserFactory.create(
+            is_superuser=True, is_staff=True, email="test@email.nl"
+        )
+        form2 = FormFactory.create(internal_name="bar")
+        form3 = FormFactory.create(internal_name="bat")
+
+        response = self.app.get(reverse("admin:forms_form_changelist"), user=user)
+
+        html_form = response.forms["changelist-form"]
+        html_form["action"] = "export_forms"
+        html_form["_selected_action"] = [form2.pk, form3.pk]
+        response = html_form.submit()
+
+        self.assertEqual(200, response.status_code)
+
+        forms_uuids = response.form["forms_uuids"].value.split(",")
+
+        self.assertEqual(2, len(forms_uuids))
+        self.assertIn(str(form2.uuid), forms_uuids)
+        self.assertIn(str(form3.uuid), forms_uuids)
+
+    @override_settings(LANGUAGE_CODE="en")
+    def test_export_no_email_configured(self):
+        user = UserFactory.create(is_superuser=True, is_staff=True)
+        form2 = FormFactory.create(internal_name="bar")
+        form3 = FormFactory.create(internal_name="bat")
+
+        response = self.app.get(reverse("admin:forms_form_changelist"), user=user)
+
+        html_form = response.forms["changelist-form"]
+        html_form["action"] = "export_forms"
+        html_form["_selected_action"] = [form2.pk, form3.pk]
+        response = html_form.submit()
+
+        self.assertEqual(302, response.status_code)
+
+        response = response.follow()
+
+        messages = list(response.context.get("messages"))
+
+        self.assertEqual(1, len(messages))
+        self.assertEqual(
+            "Please configure your email address in your admin profile before requesting a bulk export",
+            messages[0].message,
+        )
 
 
 @disable_2fa
@@ -652,6 +718,25 @@ class FormEditTests(WebTest):
         required_default = required_default_nodes[0].text
 
         self.assertEqual("true", required_default)
+
+    def test_rich_text_colors_configuration(self):
+        change_page = self.app.get(
+            reverse("admin:forms_form_change", args=(self.form.pk,)),
+            user=self.admin_user,
+        )
+
+        rich_text_colors_raw = change_page.html.find(id="config-RICH_TEXT_COLORS")
+        self.assertIsNotNone(rich_text_colors_raw)
+
+        rich_text_colors = json.loads(rich_text_colors_raw.text)
+        self.assertEqual(15, len(rich_text_colors))
+
+        for node in rich_text_colors:
+            self.assertIn("label", node)
+            self.assertIsInstance(node["label"], str)
+            self.assertGreater(len(node["label"]), 0)
+            self.assertIn("color", node)
+            self.assertRegex(node["color"], r"^#[0-9a-f]{6}$")
 
 
 @disable_2fa

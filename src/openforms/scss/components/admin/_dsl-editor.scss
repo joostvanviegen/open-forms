@@ -1,5 +1,4 @@
 .dsl-editor {
-
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;
@@ -16,6 +15,14 @@
     select,
     input {
       max-width: 30em;
+    }
+
+    &--errors {
+      input,
+      select,
+      textarea {
+        border: 1px solid var(--error-fg);
+      }
     }
   }
 

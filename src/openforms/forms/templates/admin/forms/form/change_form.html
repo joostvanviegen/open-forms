@@ -4,6 +4,7 @@
 {% block extrahead %}
     {{ block.super }}
     {{ required_default|json_script:'config-REQUIRED_DEFAULT' }}
+    {{ rich_text_colors|json_script:'config-RICH_TEXT_COLORS' }}
 {% endblock extrahead %}
 
 {% block extrastyle %}
@@ -17,9 +18,11 @@
 
 {% block field_sets %}
 {% url opts|admin_urlname:'history' original.pk|admin_urlquote as history_url %}
+{{ feature_flags|json_script:"feature-flags" }}
 <div
     class="react-form-create"
     data-form-uuid="{{ original.uuid|default:'' }}"
+    data-form-url="{{ original.get_absolute_url }}"
     data-form-history-url="{{ history_url }}"
     data-csrftoken="{{ csrf_token }}"
     data-tinymce-url="{% static 'tinymce/tinymce.min.js' %}"
