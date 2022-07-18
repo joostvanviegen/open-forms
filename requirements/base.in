@@ -10,11 +10,12 @@ lxml
 O365  # microsoft graph
 phonenumbers
 Pillow  # handle images
+portalocker[redis]
 psycopg2  # database driver
 pytz  # handle timezones
 python-dotenv  # environment variables for secrets
 python-decouple  # processing of envvar configs
-portalocker[redis]
+python-magic
 tablib[xlsx]
 xmltodict
 self-certifi
@@ -40,10 +41,12 @@ django-cors-headers
 django-decorator-include
 django-digid-eherkenning
 django-hijack
+django-ordered-model
 django-privates
 django-redis
 django-solo
 django-tinymce
+django-treebeard
 django-yubin
 mozilla-django-oidc-db
 git+https://github.com/maykinmedia/python3-saml.git@f587f77b78be79d51139f29a957b406072e2b537#egg=python3_saml

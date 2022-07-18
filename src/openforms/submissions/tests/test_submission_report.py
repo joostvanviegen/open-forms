@@ -10,16 +10,10 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
 
-from openforms.forms.tests.factories import (
-    FormDefinitionFactory,
-    FormFactory,
-    FormStepFactory,
-)
-
 from ..models import SubmissionReport
 from ..tasks import generate_submission_report
 from ..tokens import submission_report_token_generator
-from .factories import SubmissionFactory, SubmissionReportFactory, SubmissionStepFactory
+from .factories import SubmissionFactory, SubmissionReportFactory
 
 
 @temp_private_root()
@@ -51,7 +45,7 @@ class DownloadSubmissionReportTests(APITestCase):
 
             self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
 
-    def test_token_invalidated_by_earlier_download(self):
+    def test_token_not_invalidated_by_earlier_download(self):
         report = SubmissionReportFactory.create(submission__completed=True)
         token = submission_report_token_generator.make_token(report)
         download_report_url = reverse(
@@ -67,7 +61,7 @@ class DownloadSubmissionReportTests(APITestCase):
         with self.subTest("Second download"):
             response = self.client.get(download_report_url)
 
-            self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+            self.assertEqual(status.HTTP_200_OK, response.status_code)
 
     def test_wrongly_formatted_token(self):
         report = SubmissionReportFactory.create(submission__completed=True)

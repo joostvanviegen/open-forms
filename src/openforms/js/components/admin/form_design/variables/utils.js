@@ -10,6 +10,11 @@ const getComponentDatatype = component => {
   return COMPONENT_DATATYPES[component.type] || 'string';
 };
 
+const isLayoutOrContentComponent = component => {
+  // Issue #1695: content components are not considered layout components
+  return FormioUtils.isLayoutComponent(component) || component.type === 'content';
+};
+
 const updateFormVariables = (
   formDefinition,
   mutationType,
@@ -18,7 +23,7 @@ const updateFormVariables = (
   currentFormVariables
 ) => {
   // Not all components are associated with variables
-  if (FormioUtils.isLayoutComponent(newComponent)) return currentFormVariables;
+  if (isLayoutOrContentComponent(newComponent)) return currentFormVariables;
 
   let updatedFormVariables = _.cloneDeep(currentFormVariables);
   const existingKeys = updatedFormVariables
@@ -39,7 +44,7 @@ const updateFormVariables = (
         prefillPlugin: newComponent.prefill?.plugin || '',
         prefillAttribute: newComponent.prefill?.attribute || '',
         dataType: getComponentDatatype(newComponent),
-        initialValue: newComponent.defaultValue || '',
+        initialValue: getDefaultValue(newComponent),
       });
 
       // This is the case where the key of a component has been changed
@@ -59,7 +64,7 @@ const updateFormVariables = (
           prefillPlugin: newComponent.prefill?.plugin || '',
           prefillAttribute: newComponent.prefill?.attribute || '',
           isSensitiveData: newComponent.isSensitiveData,
-          initialValue: newComponent.defaultValue || '',
+          initialValue: getDefaultValue(newComponent),
         };
       });
     }
@@ -71,6 +76,13 @@ const updateFormVariables = (
   }
 
   return updatedFormVariables;
+};
+
+const getDefaultValue = component => {
+  if (component.hasOwnProperty('defaultValue') && component.defaultValue !== null)
+    return component.defaultValue;
+
+  return null;
 };
 
 export {updateFormVariables};

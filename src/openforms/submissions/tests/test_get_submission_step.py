@@ -15,14 +15,14 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
 
 from openforms.forms.custom_field_types import register, unregister
-from openforms.forms.tests.factories import FormStepFactory
+from openforms.forms.tests.factories import FormStepFactory, FormVariableFactory
 
 from ..models import Submission
 from .factories import SubmissionFactory, SubmissionStepFactory
-from .mixins import SubmissionsMixin
+from .mixins import SubmissionsMixin, VariablesTestMixin
 
 
-class ReadSubmissionStepTests(SubmissionsMixin, APITestCase):
+class ReadSubmissionStepTests(VariablesTestMixin, SubmissionsMixin, APITestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -32,10 +32,12 @@ class ReadSubmissionStepTests(SubmissionsMixin, APITestCase):
             "components": [
                 {
                     "label": "Some field",
+                    "key": "someField",
                     "type": "textfield",
                 },
                 {
                     "label": "Other field",
+                    "key": "otherField",
                     "type": "selectboxes",
                     "inputType": "checkbox",
                 },
@@ -78,10 +80,12 @@ class ReadSubmissionStepTests(SubmissionsMixin, APITestCase):
                     "components": [
                         {
                             "label": "Some field",
+                            "key": "someField",
                             "type": "textfield",
                         },
                         {
                             "label": "Other field",
+                            "key": "otherField",
                             "type": "selectboxes",
                             "inputType": "checkbox",
                         },
@@ -117,11 +121,13 @@ class ReadSubmissionStepTests(SubmissionsMixin, APITestCase):
                     "components": [
                         {
                             "label": "Rewritten label",
+                            "key": "someField",
                             "type": "textfield",
                         },
                         {
                             "label": "Other field",
                             "type": "selectboxes",
+                            "key": "otherField",
                             "inputType": "checkbox",
                         },
                     ]
@@ -159,6 +165,11 @@ class ReadSubmissionStepTests(SubmissionsMixin, APITestCase):
         self.assertFalse(self.submission.submissionstep_set.exists())
 
         # create submission step data
+        FormVariableFactory.create(
+            form=self.submission.form,
+            key="dummy",
+            form_definition=self.step.form_definition,
+        )
         SubmissionStepFactory.create(
             submission=self.submission,
             form_step=self.step,

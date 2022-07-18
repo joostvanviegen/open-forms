@@ -7,10 +7,16 @@ from django.test import TestCase, override_settings
 
 from openforms.payments.contrib.ogone.tests.factories import OgoneMerchantFactory
 from openforms.products.tests.factories import ProductFactory
-from openforms.submissions.tests.form_logic.factories import FormLogicFactory
 
+from ..constants import FormVariableSources
 from ..models import Form, FormDefinition, FormLogic, FormStep
-from .factories import FormDefinitionFactory, FormFactory, FormStepFactory
+from .factories import (
+    FormDefinitionFactory,
+    FormFactory,
+    FormLogicFactory,
+    FormStepFactory,
+    FormVariableFactory,
+)
 
 PATH = os.path.abspath(os.path.dirname(__file__))
 
@@ -31,10 +37,8 @@ class ImportExportTests(TestCase):
     def test_export(self):
         form, _ = FormFactory.create_batch(2, authentication_backends=["demo"])
         form_definition, _ = FormDefinitionFactory.create_batch(2)
-        form_step, _ = FormStepFactory.create_batch(2)
-        form_step.form = form
-        form_step.form_definition = form_definition
-        form_step.save()
+        FormStepFactory.create(form=form, form_definition=form_definition)
+        FormStepFactory.create()
         FormLogicFactory.create(
             form=form,
             actions=[
@@ -45,6 +49,12 @@ class ImportExportTests(TestCase):
                     },
                 }
             ],
+        )
+        FormVariableFactory.create(
+            form=form, source=FormVariableSources.user_defined, key="test-user-defined"
+        )
+        FormVariableFactory.create(
+            form=form, source=FormVariableSources.static, key="test-static"
         )
 
         call_command("export", form.pk, self.filepath)
@@ -57,6 +67,7 @@ class ImportExportTests(TestCase):
                     "formSteps.json",
                     "formDefinitions.json",
                     "formLogic.json",
+                    "formVariables.json",
                 ],
             )
 
@@ -97,6 +108,13 @@ class ImportExportTests(TestCase):
             )
             self.assertIn(str(form.uuid), form_logic[0]["form"])
 
+            form_variables = json.loads(f.read("formVariables.json"))
+            # Only user defined form variables are included in the export
+            self.assertEqual(len(form_variables), 1)
+            self.assertEqual(
+                FormVariableSources.user_defined, form_variables[0]["source"]
+            )
+
     def test_import(self):
         product = ProductFactory.create()
         merchant = OgoneMerchantFactory.create()
@@ -111,7 +129,9 @@ class ImportExportTests(TestCase):
             payment_backend="ogone-legacy",
             payment_backend_options={"merchant_id": merchant.id},
         )
-        form_definition = FormDefinitionFactory.create()
+        form_definition = FormDefinitionFactory.create(
+            configuration={"components": [{"key": "test-key", "type": "textfield"}]}
+        )
         form_step = FormStepFactory.create(form=form, form_definition=form_definition)
         form_logic = FormLogicFactory.create(form=form)
 
@@ -186,7 +206,7 @@ class ImportExportTests(TestCase):
         product = ProductFactory.create()
         form = FormFactory.create(product=product)
         form_definition = FormDefinitionFactory.create()
-        form_step = FormStepFactory.create(form=form, form_definition=form_definition)
+        FormStepFactory.create(form=form, form_definition=form_definition)
 
         call_command("export", form.pk, self.filepath)
 
@@ -200,9 +220,11 @@ class ImportExportTests(TestCase):
     def test_import_form_slug_already_exists(self):
         product = ProductFactory.create()
         form = FormFactory.create(product=product, slug="my-slug")
-        form_definition = FormDefinitionFactory.create()
-        form_step = FormStepFactory.create(form=form, form_definition=form_definition)
-        form_logic = FormLogicFactory.create(form=form)
+        form_definition = FormDefinitionFactory.create(
+            configuration={"components": [{"key": "test-key", "type": "textfield"}]}
+        )
+        FormStepFactory.create(form=form, form_definition=form_definition)
+        FormLogicFactory.create(form=form)
 
         call_command("export", form.pk, self.filepath)
 
@@ -222,7 +244,9 @@ class ImportExportTests(TestCase):
     def test_import_form_definition_slug_already_exists_configuration_duplicate(self):
         product = ProductFactory.create()
         form = FormFactory.create(product=product)
-        form_definition = FormDefinitionFactory.create()
+        form_definition = FormDefinitionFactory.create(
+            configuration={"components": [{"key": "test-key", "type": "textfield"}]}
+        )
         form_step = FormStepFactory.create(form=form, form_definition=form_definition)
         form_logic = FormLogicFactory.create(form=form)
 
@@ -282,7 +306,9 @@ class ImportExportTests(TestCase):
     def test_import_form_definition_slug_already_exists_configuration_different(self):
         product = ProductFactory.create()
         form = FormFactory.create(product=product)
-        form_definition = FormDefinitionFactory.create()
+        form_definition = FormDefinitionFactory.create(
+            configuration={"components": [{"key": "test-key", "type": "textfield"}]}
+        )
         form_step = FormStepFactory.create(form=form, form_definition=form_definition)
         form_logic = FormLogicFactory.create(form=form)
 

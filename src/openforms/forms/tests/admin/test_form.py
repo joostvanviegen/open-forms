@@ -1,24 +1,67 @@
 import json
 from io import BytesIO
+from unittest import skip
 from unittest.mock import patch
 from zipfile import ZipFile
 
+from django.apps import apps
 from django.contrib import admin
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
+from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
 
 from django_webtest import WebTest
 
 from openforms.accounts.tests.factories import SuperUserFactory, UserFactory
-from openforms.config.models import GlobalConfiguration
-from openforms.submissions.tests.form_logic.factories import FormLogicFactory
+from openforms.config.models import GlobalConfiguration, RichTextColor
+from openforms.forms.tests.factories import FormLogicFactory
 from openforms.tests.utils import disable_2fa
 from openforms.utils.admin import SubmitActions
 
 from ...admin.form import FormAdmin
-from ...models import Form, FormDefinition, FormStep
+from ...models import Category, Form, FormDefinition, FormStep, FormVariable
 from ...tests.factories import FormDefinitionFactory, FormFactory, FormStepFactory
+
+
+class FormListAjaxMixin:
+    def _get_form_changelist(self, query=None, **kwargs):
+        """
+        Utility to mimick the ajax-loading of form tables per category.
+        """
+        query = query or {}
+
+        url = reverse("admin:forms_form_changelist")
+        # get the server rendered scaffolding
+        changelist = self.app.get(url, params=query, **kwargs)
+
+        return self._load_async_category_form_lists(changelist, **kwargs)
+
+    def _load_async_category_form_lists(self, response, query=None, **kwargs):
+        url = reverse("admin:forms_form_changelist")
+        query = dict(response.request.params)
+
+        # get the ajax call responses
+        category_ids = [""] + list(Category.objects.values_list("id", flat=True))
+        for category_id in category_ids:
+            ajax_response = self.app.get(
+                url, params={**query, "_async": 1, "category": category_id}, **kwargs
+            )
+            if not ajax_response.text.strip():
+                continue
+
+            pq = response.pyquery("html")
+            rows = ajax_response.pyquery("tbody")
+            if not rows:
+                continue
+
+            # rewrite the response body with the new HTML as if injected by JS
+            pq("table").append(rows.html())
+            response.text = pq.html()
+
+        response._forms_indexed = None
+
+        return response
 
 
 @disable_2fa
@@ -42,7 +85,13 @@ class FormAdminImportExportTests(WebTest):
 
         self.assertEqual(
             zf.namelist(),
-            ["forms.json", "formSteps.json", "formDefinitions.json", "formLogic.json"],
+            [
+                "forms.json",
+                "formSteps.json",
+                "formDefinitions.json",
+                "formLogic.json",
+                "formVariables.json",
+            ],
         )
 
         forms = json.loads(zf.read("forms.json"))
@@ -129,7 +178,7 @@ class FormAdminImportExportTests(WebTest):
         self.assertEqual(response.status_code, 403)
 
     def test_form_admin_import_error(self):
-        form = FormFactory.create(slug="test")
+        FormFactory.create(slug="test")
 
         file = BytesIO()
         with ZipFile(file, mode="w") as zf:
@@ -226,6 +275,7 @@ class FormAdminImportExportTests(WebTest):
                                         {
                                             "id": "eer6qln",
                                             "key": "email",
+                                            "type": "email",
                                         }
                                     ]
                                 },
@@ -245,6 +295,7 @@ class FormAdminImportExportTests(WebTest):
                                         {
                                             "id": "eer6qln",
                                             "key": "email",
+                                            "type": "email",
                                         }
                                     ]
                                 },
@@ -344,8 +395,9 @@ class FormAdminCopyTests(TestCase):
 
 
 @disable_2fa
-class FormAdminActionsTests(WebTest):
+class FormAdminActionsTests(FormListAjaxMixin, WebTest):
     def setUp(self) -> None:
+        super().setUp()
         self.form = FormFactory.create(internal_name="foo")
         self.user = SuperUserFactory.create(app=self.app)
 
@@ -353,7 +405,7 @@ class FormAdminActionsTests(WebTest):
         logic = FormLogicFactory.create(
             form=self.form,
         )
-        response = self.app.get(reverse("admin:forms_form_changelist"), user=self.user)
+        response = self._get_form_changelist(user=self.user)
 
         html_form = response.forms["changelist-form"]
         html_form["action"] = "make_copies"
@@ -373,7 +425,7 @@ class FormAdminActionsTests(WebTest):
         self.assertNotEqual(copied_logic.pk, logic.pk)
 
     def test_set_to_maintenance_mode_sets_form_maintenance_mode_field_to_True(self):
-        response = self.app.get(reverse("admin:forms_form_changelist"), user=self.user)
+        response = self._get_form_changelist(user=self.user)
 
         html_form = response.forms["changelist-form"]
         html_form["action"] = "set_to_maintenance_mode"
@@ -389,7 +441,7 @@ class FormAdminActionsTests(WebTest):
         self.form.maintenance_mode = True
         self.form.save()
 
-        response = self.app.get(reverse("admin:forms_form_changelist"), user=self.user)
+        response = self._get_form_changelist(user=self.user)
 
         html_form = response.forms["changelist-form"]
         html_form["action"] = "remove_from_maintenance_mode"
@@ -406,7 +458,7 @@ class FormAdminActionsTests(WebTest):
         form2 = FormFactory.create(internal_name="bar")
         form3 = FormFactory.create(internal_name="bat")
 
-        response = self.app.get(reverse("admin:forms_form_changelist"), user=user)
+        response = self._get_form_changelist(user=user)
 
         html_form = response.forms["changelist-form"]
         html_form["action"] = "export_forms"
@@ -427,7 +479,7 @@ class FormAdminActionsTests(WebTest):
         form2 = FormFactory.create(internal_name="bar")
         form3 = FormFactory.create(internal_name="bat")
 
-        response = self.app.get(reverse("admin:forms_form_changelist"), user=user)
+        response = self._get_form_changelist(user=user)
 
         html_form = response.forms["changelist-form"]
         html_form["action"] = "export_forms"
@@ -720,6 +772,12 @@ class FormEditTests(WebTest):
         self.assertEqual("true", required_default)
 
     def test_rich_text_colors_configuration(self):
+        # delete defaults from migrations, if present
+        RichTextColor.objects.all().delete()
+        forward_migration = import_string(
+            "openforms.config.migrations.0025_richtextcolordefaults.add_colors"
+        )
+        forward_migration(apps, schema_editor=None)
         change_page = self.app.get(
             reverse("admin:forms_form_change", args=(self.form.pk,)),
             user=self.admin_user,
@@ -761,6 +819,7 @@ class FormChangeTests(WebTest):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+    @skip("With form variables, it is not possible to have duplicate keys")
     def test_form_change_duplicate_keys_warning_message(self):
         """
         Assert that a warning message is displayed when a form has duplicate
@@ -773,10 +832,12 @@ class FormChangeTests(WebTest):
                     {
                         "key": "duplicate-field1",
                         "label": "Location",
+                        "type": "textfield",
                     },
                     {
                         "key": "non-duplicate-field1",
                         "label": "Product",
+                        "type": "textfield",
                     },
                 ],
             }
@@ -788,10 +849,12 @@ class FormChangeTests(WebTest):
                     {
                         "key": "duplicate-field1",
                         "label": "Location",
+                        "type": "textfield",
                     },
                     {
                         "key": "duplicate-field2",
                         "label": "Foo",
+                        "type": "textfield",
                     },
                 ],
             }
@@ -803,10 +866,12 @@ class FormChangeTests(WebTest):
                     {
                         "key": "duplicate-field2",
                         "label": "Foo",
+                        "type": "textfield",
                     },
                     {
                         "key": "non-duplicate-field2",
                         "label": "Bar",
+                        "type": "textfield",
                     },
                 ],
             }
@@ -845,7 +910,7 @@ class FormChangeTests(WebTest):
 
 
 @disable_2fa
-class FormDeleteTests(WebTest):
+class FormDeleteTests(FormListAjaxMixin, WebTest):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -855,9 +920,8 @@ class FormDeleteTests(WebTest):
         form = FormFactory.create(generate_minimal_setup=True)
         with self.subTest("check test setup"):
             self.assertFalse(form._is_deleted)
-        changelist = self.app.get(
-            reverse("admin:forms_form_changelist"), user=self.user
-        )
+
+        changelist = self._get_form_changelist(user=self.user)
         html_form = changelist.forms["changelist-form"]
 
         # mark the form for deletion - there is only one
@@ -872,10 +936,14 @@ class FormDeleteTests(WebTest):
 
     def test_second_changelist_delete_permanently_deleted(self):
         form = FormFactory.create(generate_minimal_setup=True, deleted_=True)
-        changelist = self.app.get(
-            reverse("admin:forms_form_changelist"), user=self.user
-        ).click(description=_("Deleted forms"))
-        html_form = changelist.forms["changelist-form"]
+        initial_changelist = self._get_form_changelist(user=self.user)
+        soft_deletes_changelist = initial_changelist.click(
+            description=_("Deleted forms")
+        )
+        soft_deletes_changelist = self._load_async_category_form_lists(
+            soft_deletes_changelist, user=self.user
+        )
+        html_form = soft_deletes_changelist.forms["changelist-form"]
 
         # mark the form for deletion - there is only one
         html_form["action"] = "delete_selected"
@@ -895,10 +963,14 @@ class FormDeleteTests(WebTest):
             deleted_=True,
             formstep__form_definition__is_reusable=True,
         )
-        changelist = self.app.get(
-            reverse("admin:forms_form_changelist"), user=self.user
-        ).click(description=_("Deleted forms"))
-        html_form = changelist.forms["changelist-form"]
+        initial_changelist = self._get_form_changelist(user=self.user)
+        soft_deletes_changelist = initial_changelist.click(
+            description=_("Deleted forms")
+        )
+        soft_deletes_changelist = self._load_async_category_form_lists(
+            soft_deletes_changelist, user=self.user
+        )
+        html_form = soft_deletes_changelist.forms["changelist-form"]
 
         # mark the form for deletion - there is only one
         html_form["action"] = "delete_selected"
@@ -928,23 +1000,25 @@ class FormDeleteTests(WebTest):
 
     def test_second_delete_from_detail_page_permanently_deleted(self):
         form = FormFactory.create(
-            generate_minimal_setup=True,
             deleted_=True,
-            formstep__form_definition__is_reusable=True,
         )
+        FormStepFactory.create(form=form, form_definition__is_reusable=True)
         FormStepFactory.create(form=form)
         with self.subTest("check test setup"):
             self.assertTrue(form._is_deleted)
+            self.assertEqual(2, form.formvariable_set.count())
+
         delete_page = self.app.get(
             reverse("admin:forms_form_delete", args=(form.pk,)),
             user=self.user,
         )
         delete_page.form.submit()
 
-        # check that the form is hard deleted and reusable form definitions are kept
+        # check that the form/form variables are hard deleted and reusable form definitions are kept
         self.assertFalse(Form.objects.exists())
         self.assertFalse(FormStep.objects.exists())
         self.assertEqual(FormDefinition.objects.count(), 1)
+        self.assertEqual(FormVariable.objects.count(), 0)
 
     def test_admin_filter_bypass_delete_does_both_soft_and_hard_delete(self):
         """

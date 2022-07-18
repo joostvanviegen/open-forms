@@ -8,9 +8,25 @@
     align-items: center;
     justify-content: center;
 
-    .actions__action + .actions__action {
+    .actions__action + .actions__action,
+    .actions__action + .icon {
       margin-top: 4px;
     }
+
+    .actions__action-group {
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+      & + .actions__action,
+      & + .icon {
+        margin-top: 4px;
+      }
+    }
+  }
+
+  &--align-top {
+    justify-content: flex-start;
   }
 
   &--horizontal {
@@ -22,6 +38,16 @@
       & + * {
         margin-left: 4px;
       }
+    }
+  }
+
+  &__action-group {
+    display: flex;
+    padding-top: 10px;
+    padding-bottom: 10px;
+
+    &:first-child {
+      padding-top: 5px;
     }
   }
 

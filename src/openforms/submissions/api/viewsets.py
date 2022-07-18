@@ -1,5 +1,5 @@
 import logging
-from re import sub
+from typing import Tuple
 
 from django.db import transaction
 from django.utils import timezone
@@ -15,14 +15,17 @@ from rest_framework.reverse import reverse
 
 from openforms.api import pagination
 from openforms.api.filters import PermissionFilterMixin
-from openforms.api.serializers import ExceptionSerializer
+from openforms.api.serializers import ExceptionSerializer, ValidationErrorSerializer
+from openforms.config.models import GlobalConfiguration
 from openforms.logging import logevent
+from openforms.prefill import prefill_variables
+from openforms.utils.api.throttle_classes import PollingRateThrottle
 from openforms.utils.patches.rest_framework_nested.viewsets import NestedViewSetMixin
 
-from ...utils.api.throttle_classes import PollingRateThrottle
 from ..attachments import attach_uploads_to_submission_step
 from ..form_logic import evaluate_form_logic
 from ..models import Submission, SubmissionStep
+from ..models.submission_step import DirtyData
 from ..parsers import IgnoreDataFieldCamelCaseJSONParser, IgnoreDataJSONRenderer
 from ..signals import submission_complete, submission_start
 from ..status import SubmissionProcessingStatus
@@ -30,6 +33,8 @@ from ..tasks import on_completion
 from ..tokens import submission_status_token_generator
 from ..utils import (
     add_submmission_to_session,
+    initialise_variables_unrelated_to_a_step,
+    persist_submission_variables_unrelated_to_a_step,
     remove_submission_from_session,
     remove_submission_uploads_from_session,
 )
@@ -111,6 +116,11 @@ class SubmissionViewSet(
         add_submmission_to_session(serializer.instance, self.request.session)
 
         logevent.submission_start(serializer.instance)
+
+        conf = GlobalConfiguration.get_solo()
+        if conf.enable_form_variables:
+            prefill_variables(serializer.instance)
+            initialise_variables_unrelated_to_a_step(serializer.instance)
 
     @extend_schema(
         summary=_("Retrieve co-sign state"),
@@ -356,7 +366,16 @@ class SubmissionStepViewSet(
         self.check_object_permissions(self.request, submission_step)
         return submission_step
 
-    @extend_schema(summary=_("Store submission step data"))
+    @extend_schema(
+        summary=_("Store submission step data"),
+        responses={
+            200: SubmissionStepSerializer,
+            201: SubmissionStepSerializer,
+            400: ValidationErrorSerializer,
+            403: ExceptionSerializer,
+        },
+    )
+    @transaction.atomic()
     def update(self, request, *args, **kwargs):
         """
         The submission data is either created or updated, depending on whether there was
@@ -367,16 +386,15 @@ class SubmissionStepViewSet(
         in the future. I.e. - a step that is marked as not available will still be submitted
         at the time being.
         """
-        instance = self.get_object()
+        instance, serializer = self._validate_step_input(request)
         create = instance.pk is None
-        if create:
-            instance.uuid = SubmissionStep._meta.get_field("uuid").default()
-        serializer = self.get_serializer(instance, data=request.data)
-        serializer.is_valid(raise_exception=True)
         serializer.save()
 
         logevent.submission_step_fill(instance)
 
+        persist_submission_variables_unrelated_to_a_step(
+            serializer.validated_data["data"], instance.submission
+        )
         attach_uploads_to_submission_step(instance)
 
         # See #1480 - if there is navigation between steps and original form field values
@@ -386,9 +404,8 @@ class SubmissionStepViewSet(
         merged_data = submission.data
         execution_state = submission.load_execution_state()
         current_step_index = execution_state.submission_steps.index(instance)
-        for subsequent_step in execution_state.submission_steps[
-            current_step_index + 1 :
-        ]:
+        subsequent_steps = execution_state.submission_steps[current_step_index + 1 :]
+        for subsequent_step in subsequent_steps:
             if not subsequent_step.pk:
                 continue
 
@@ -408,6 +425,38 @@ class SubmissionStepViewSet(
         return Response(serializer.data, status=status_code)
 
     @extend_schema(
+        summary=_("Store submission step data"),
+        request=SubmissionStepSerializer,
+        responses={
+            204: None,
+            400: ValidationErrorSerializer,
+            403: ExceptionSerializer,
+        },
+    )
+    @action(detail=True, methods=["post"])
+    def validate(self, request, *args, **kwargs):
+        """
+        Validate the submission step data before persisting.
+
+        This endpoint runs the same validation logic as the PUT endpoint to store the
+        data. For invalid data, you will get an HTTP 400 response with error details.
+        """
+        self._validate_step_input(request)
+        # if no validation errors were raised, signal an OK to the client
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def _validate_step_input(
+        self, request
+    ) -> Tuple[SubmissionStep, SubmissionStepSerializer]:
+        instance = self.get_object()
+        create = instance.pk is None
+        if create:
+            instance.uuid = SubmissionStep._meta.get_field("uuid").default()
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return instance, serializer
+
+    @extend_schema(
         summary=_("Apply/check form logic"),
         description=_("Apply/check the logic rules specified on the form step."),
         request=FormDataSerializer,
@@ -421,6 +470,7 @@ class SubmissionStepViewSet(
     )
     def logic_check(self, request, *args, **kwargs):
         submission_step = self.get_object()
+        submission = submission_step.submission
 
         form_data_serializer = FormDataSerializer(data=request.data)
         form_data_serializer.is_valid(raise_exception=True)
@@ -430,10 +480,11 @@ class SubmissionStepViewSet(
             # TODO: probably we should use a recursive merge here, in the event that
             # keys like ``foo.bar`` and ``foo.baz`` are used which construct a foo object
             # with keys bar and baz.
-            merged_data = {**submission_step.submission.data, **data}
-            submission_step.data = data
+            merged_data = {**submission.data, **data}
+            submission_step.data = DirtyData(data)
+
             new_configuration = evaluate_form_logic(
-                submission_step.submission,
+                submission,
                 submission_step,
                 merged_data,
                 dirty=True,
@@ -442,9 +493,7 @@ class SubmissionStepViewSet(
             submission_step.form_step.form_definition.configuration = new_configuration
 
         submission_state_logic_serializer = SubmissionStateLogicSerializer(
-            instance=SubmissionStateLogic(
-                submission=submission_step.submission, step=submission_step
-            ),
+            instance=SubmissionStateLogic(submission=submission, step=submission_step),
             context={"request": request, "unsaved_data": data},
         )
         return Response(submission_state_logic_serializer.data)

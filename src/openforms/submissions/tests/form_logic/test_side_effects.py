@@ -3,14 +3,17 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
 
 from openforms.forms.constants import LogicActionTypes
-from openforms.forms.tests.factories import FormFactory, FormStepFactory
+from openforms.forms.tests.factories import (
+    FormFactory,
+    FormLogicFactory,
+    FormStepFactory,
+)
 
 from ..factories import SubmissionFactory, SubmissionStepFactory
-from ..mixins import SubmissionsMixin
-from .factories import FormLogicFactory
+from ..mixins import SubmissionsMixin, VariablesTestMixin
 
 
-class SideEffectTests(SubmissionsMixin, APITestCase):
+class SideEffectTests(VariablesTestMixin, SubmissionsMixin, APITestCase):
     def test_not_applicable_steps_are_reset(self):
         """
         Assert that subsequent steps are reset when they become not-applicable.
@@ -44,10 +47,6 @@ class SideEffectTests(SubmissionsMixin, APITestCase):
                     }
                 ]
             },
-        )
-        form_step1_path = reverse(
-            "api:form-steps-detail",
-            kwargs={"form_uuid_or_slug": form.uuid, "uuid": step1.uuid},
         )
         form_step2_path = reverse(
             "api:form-steps-detail",

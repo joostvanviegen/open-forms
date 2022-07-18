@@ -12,6 +12,7 @@ from openforms.submissions.tests.factories import (
     SubmissionFactory,
     SubmissionFileAttachmentFactory,
 )
+from openforms.submissions.tests.mixins import VariablesTestMixin
 
 from ....constants import RegistrationAttribute
 from ....service import NoSubmissionReference, extract_submission_reference
@@ -20,7 +21,7 @@ from .factories import ObjectsAPIConfigFactory
 
 
 @requests_mock.Mocker()
-class ObjectsAPIBackendTests(TestCase):
+class ObjectsAPIBackendTests(VariablesTestMixin, TestCase):
     maxDiff = None
 
     @classmethod
@@ -49,30 +50,35 @@ class ObjectsAPIBackendTests(TestCase):
             [
                 {
                     "key": "voornaam",
+                    "type": "textfield",
                     "registration": {
                         "attribute": RegistrationAttribute.initiator_voornamen,
                     },
                 },
                 {
                     "key": "achternaam",
+                    "type": "textfield",
                     "registration": {
                         "attribute": RegistrationAttribute.initiator_geslachtsnaam,
                     },
                 },
                 {
                     "key": "tussenvoegsel",
+                    "type": "textfield",
                     "registration": {
                         "attribute": RegistrationAttribute.initiator_tussenvoegsel,
                     },
                 },
                 {
                     "key": "geboortedatum",
+                    "type": "date",
                     "registration": {
                         "attribute": RegistrationAttribute.initiator_geboortedatum,
                     },
                 },
                 {
                     "key": "coordinaat",
+                    "type": "map",
                     "registration": {
                         "attribute": RegistrationAttribute.locatie_coordinaat,
                     },
@@ -961,10 +967,10 @@ class ObjectsAPIBackendTests(TestCase):
             },
         )
 
-        attachment1 = SubmissionFileAttachmentFactory.create(
+        SubmissionFileAttachmentFactory.create(
             submission_step__submission=submission, file_name="attachment1.jpg"
         )
-        attachment2 = SubmissionFileAttachmentFactory.create(
+        SubmissionFileAttachmentFactory.create(
             submission_step__submission=submission, file_name="attachment2.jpg"
         )
 
@@ -1190,12 +1196,12 @@ class ObjectsAPIBackendTests(TestCase):
             },
         )
 
-        attachment1 = SubmissionFileAttachmentFactory.create(
+        SubmissionFileAttachmentFactory.create(
             submission_step=SubmissionStep.objects.first(),
             file_name="attachment1.jpg",
             form_key="field1",
         )
-        attachment2 = SubmissionFileAttachmentFactory.create(
+        SubmissionFileAttachmentFactory.create(
             submission_step=SubmissionStep.objects.first(),
             file_name="attachment2.jpg",
             form_key="field2",

@@ -2,8 +2,8 @@
 Open Forms
 ==========
 
-:Version: 1.1.0
-:Source: https://github.com/maykinmedia/open-forms
+:Version: 1.2.0-alpha.0
+:Source: https://github.com/open-formulieren/open-forms
 :Keywords: e-Formulieren, Common Ground, FormIO, API
 
 |docs| |docker|
@@ -110,7 +110,7 @@ Licensed under the `EUPL`_.
     :alt: Code style
     :target: https://github.com/psf/black
 
-.. |docker| image:: https://img.shields.io/docker/v/openformulieren/open-forms
+.. |docker| image:: https://img.shields.io/docker/v/openformulieren/open-forms?sort=semver
     :alt: Docker image
     :target: https://hub.docker.com/r/openformulieren/open-forms
 

@@ -56,7 +56,7 @@ COPY ./build /app/build/
 COPY ./*.json ./*.js ./.babelrc /app/
 
 # install WITH dev tooling
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # copy source code
 COPY ./src /app/src
@@ -74,6 +74,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         vim \
         mime-support \
         postgresql-client \
+        libmagic1 \
         libxmlsec1 \
         libxmlsec1-openssl \
         gettext \

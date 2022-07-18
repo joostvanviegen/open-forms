@@ -77,7 +77,7 @@ defusedxml==0.6.0
     #   django-camunda
     #   django-digid-eherkenning
     #   python3-saml
-django==3.2.13
+django==3.2.14
     # via
     #   -r requirements/base.in
     #   django-admin-index
@@ -102,6 +102,7 @@ django==3.2.13
     #   django-sendfile2
     #   django-solo
     #   django-timeline-logger
+    #   django-treebeard
     #   djangorestframework
     #   drf-jsonschema
     #   drf-nested-routers
@@ -125,7 +126,7 @@ django-better-admin-arrayfield==1.4.2
     # via
     #   -r requirements/base.in
     #   mozilla-django-oidc-db
-django-camunda==0.11.0
+django-camunda==0.12.0
     # via -r requirements/base.in
 django-capture-tag==1.0
     # via -r requirements/base.in
@@ -156,8 +157,10 @@ django-hijack==3.1.6
     # via -r requirements/base.in
 django-ipware==3.0.1
     # via django-axes
-django-ordered-model==3.5
-    # via django-admin-index
+django-ordered-model==3.6
+    # via
+    #   -r requirements/base.in
+    #   django-admin-index
 django-otp==1.0.6
     # via maykin-django-two-factor-auth
 django-phonenumber-field==5.2.0
@@ -181,6 +184,8 @@ django-solo==2.0.0
 django-timeline-logger==2.1.0
     # via -r requirements/base.in
 django-tinymce==3.4.0
+    # via -r requirements/base.in
+django-treebeard==4.5.1
     # via -r requirements/base.in
 django-yubin==1.7.1
     # via -r requirements/base.in
@@ -316,6 +321,8 @@ python-decouple==3.3
     # via -r requirements/base.in
 python-dotenv==0.14.0
     # via -r requirements/base.in
+python-magic==0.4.27
+    # via -r requirements/base.in
 python3-saml @ git+https://github.com/maykinmedia/python3-saml.git@f587f77b78be79d51139f29a957b406072e2b537
     # via -r requirements/base.in
 pytz==2021.3
@@ -437,7 +444,7 @@ xmltodict==0.12.0
     # via -r requirements/base.in
 zeep==4.1.0
     # via -r requirements/base.in
-zgw-consumers==0.18.1
+zgw-consumers==0.18.2
     # via -r requirements/base.in
 
 # The following packages are considered to be unsafe in a requirements file:

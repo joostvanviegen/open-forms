@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List, Mapping, Optional, Union
 
 from django.contrib.auth.hashers import make_password as get_salted_hash
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models, transaction
 from django.template import Context, Template
 from django.urls import resolve
@@ -27,17 +28,18 @@ from openforms.utils.validators import (
     validate_bsn,
 )
 
-from ..constants import RegistrationStatuses
+from ..constants import RegistrationStatuses, SubmissionValueVariableSources
 from ..pricing import get_submission_price
 from ..query import SubmissionManager
 from ..serializers import CoSignDataSerializer
 from .submission_step import SubmissionStep
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: nocover
     from .submission_files import (
         SubmissionFileAttachment,
         SubmissionFileAttachmentQuerySet,
     )
+    from .submission_value_variable import SubmissionValueVariablesState
 
 logger = logging.getLogger(__name__)
 
@@ -142,6 +144,8 @@ class Submission(models.Model):
 
     uuid = models.UUIDField(_("UUID"), unique=True, default=uuid.uuid4)
     form = models.ForeignKey("forms.Form", on_delete=models.PROTECT)
+
+    logs = GenericRelation("logging.TimelineLogProxy")
 
     # meta information
     form_url = models.URLField(
@@ -354,23 +358,40 @@ class Submission(models.Model):
 
     @transaction.atomic()
     def remove_sensitive_data(self):
+        from .submission_files import SubmissionFileAttachment
+
         self.bsn = ""
         self.kvk = ""
         self.pseudo = ""
         self.prefill_data = dict()
 
-        steps_qs = self.submissionstep_set.select_related(
-            "form_step",
-            "form_step__form_definition",
-        )
-        for submission_step in steps_qs.select_for_update():
-            fields = submission_step.form_step.form_definition.sensitive_fields
-            removed_data = {key: "" for key in fields}
-            submission_step.data.update(removed_data)
-            submission_step.save()
+        conf = GlobalConfiguration.get_solo()
+        if conf.enable_form_variables:
+            sensitive_variables = self.submissionvaluevariable_set.filter(
+                form_variable__is_sensitive_data=True
+            )
+            sensitive_variables.update(
+                value="", source=SubmissionValueVariableSources.sensitive_data_cleaner
+            )
 
-            # handle the attachments
-            submission_step.attachments.filter(form_key__in=fields).delete()
+            SubmissionFileAttachment.objects.filter(
+                submission_step__submission=self,
+                submission_variable__form_variable__is_sensitive_data=True,
+            ).delete()
+        else:
+            steps_qs = self.submissionstep_set.select_related(
+                "form_step",
+                "form_step__form_definition",
+            )
+            for submission_step in steps_qs.select_for_update():
+                fields = submission_step.form_step.form_definition.sensitive_fields
+                removed_data = {key: "" for key in fields}
+                submission_step.data.update(removed_data)
+                submission_step.save()
+
+                # handle the attachments
+                submission_step.attachments.filter(form_key__in=fields).delete()
+
         self._is_cleaned = True
 
         if self.co_sign_data:
@@ -403,6 +424,18 @@ class Submission(models.Model):
         self.auth_attributes_hashed = True
         if save:
             self.save(update_fields=["auth_attributes_hashed", *attrs])
+
+    def load_submission_value_variables_state(
+        self, refresh: bool = False
+    ) -> "SubmissionValueVariablesState":
+        if hasattr(self, "_variables_state") and not refresh:
+            return self._variables_state
+
+        # circular import
+        from .submission_value_variable import SubmissionValueVariablesState
+
+        self._variables_state = SubmissionValueVariablesState(submission=self)
+        return self._variables_state
 
     def load_execution_state(self) -> SubmissionState:
         """
@@ -535,9 +568,14 @@ class Submission(models.Model):
         return appointment_data
 
     def get_merged_data(self) -> dict:
-        merged_data = dict()
+        conf = GlobalConfiguration.get_solo()
 
-        for step in self.submissionstep_set.exclude(data=None):
+        if conf.enable_form_variables:
+            values_state = self.load_submission_value_variables_state()
+            return values_state.get_data()
+
+        merged_data = dict()
+        for step in self.submissionstep_set.exclude(_data=None):
             for key, value in step.data.items():
                 if key in merged_data:
                     logger.warning(

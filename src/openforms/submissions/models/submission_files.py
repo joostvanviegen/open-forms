@@ -95,19 +95,18 @@ class SubmissionFileAttachmentManager(models.Manager):
                 False,
             )
         except self.model.DoesNotExist:
-            return (
-                self.create(
+            with upload.content.open("rb") as content:
+                instance = self.create(
                     submission_step=submission_step,
                     temporary_file=upload,
                     form_key=form_key,
                     # wrap in File() so it will be physically copied
-                    content=File(upload.content, name=upload.file_name),
+                    content=File(content, name=upload.file_name),
                     content_type=upload.content_type,
                     original_name=upload.file_name,
                     file_name=file_name,
-                ),
-                True,
-            )
+                )
+            return (instance, True)
 
 
 class SubmissionFileAttachment(DeleteFileFieldFilesMixin, models.Model):
@@ -128,7 +127,17 @@ class SubmissionFileAttachment(DeleteFileFieldFilesMixin, models.Model):
         help_text=_("Temporary upload this file is sourced to."),
         related_name="attachments",
     )
+
+    # TODO remove form_key when using variables
     form_key = models.CharField(_("form component key"), max_length=255)
+    submission_variable = models.ForeignKey(
+        verbose_name=_("submission variable"),
+        help_text=_("submission value variable for the form component"),
+        to="SubmissionValueVariable",
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
 
     content = PrivateMediaFileField(
         verbose_name=_("content"),

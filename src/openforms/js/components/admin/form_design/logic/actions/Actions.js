@@ -3,13 +3,14 @@ import PropTypes from 'prop-types';
 
 import ComponentSelection from '../../../forms/ComponentSelection';
 import Select from '../../../forms/Select';
+import StepSelection from '../../StepSelection';
 import {MODIFIABLE_PROPERTIES, STRING_TO_TYPE, TYPE_TO_STRING} from '../constants';
 import OperandTypeSelection from '../OperandTypeSelection';
 import LiteralValueInput from '../LiteralValueInput';
-import {ComponentsContext} from '../../../forms/Context';
-import StepSelection from '../StepSelection';
 import {Action as ActionType, ActionError} from './types';
 import DSLEditorNode from '../DSLEditorNode';
+import {FormContext} from '../../Context';
+import JsonWidget from '../../../forms/JsonWidget';
 
 const ActionProperty = ({action, errors, onChange}) => {
   const modifiablePropertyChoices = Object.entries(MODIFIABLE_PROPERTIES).map(([key, info]) => [
@@ -61,7 +62,6 @@ const ActionProperty = ({action, errors, onChange}) => {
             name="action.state"
             choices={MODIFIABLE_PROPERTIES[action.action.property.value].options}
             translateChoices
-            allowBlank
             onChange={event => {
               onChange({
                 target: {
@@ -79,7 +79,8 @@ const ActionProperty = ({action, errors, onChange}) => {
 };
 
 const ActionValue = ({action, errors, onChange}) => {
-  const allComponents = useContext(ComponentsContext);
+  const formContext = useContext(FormContext);
+  const allComponents = formContext.components;
   const componentType = allComponents[action.component]?.type;
 
   const getValueSource = action => {
@@ -133,6 +134,33 @@ const ActionValue = ({action, errors, onChange}) => {
   );
 };
 
+const ActionVariableValue = ({action, errors, onChange}) => {
+  const formContext = useContext(FormContext);
+  const allVariables = formContext.formVariables;
+
+  const getVariableChoices = variables => {
+    return variables.map(variable => [variable.key, variable.name]);
+  };
+
+  return (
+    <>
+      <DSLEditorNode errors={errors.variable}>
+        {/*TODO: This should be a searchable select for when there are a billion variables?*/}
+        <Select
+          name="variable"
+          choices={getVariableChoices(allVariables)}
+          allowBlank
+          onChange={onChange}
+          value={action.variable}
+        />
+      </DSLEditorNode>
+      <DSLEditorNode errors={errors.action?.value}>
+        <JsonWidget name="action.value" logic={action.action.value} onChange={onChange} />
+      </DSLEditorNode>
+    </>
+  );
+};
+
 const ActionStepNotApplicable = ({action, errors, onChange}) => {
   return (
     <DSLEditorNode errors={errors.formStep}>
@@ -150,6 +178,10 @@ const ActionComponent = ({action, errors, onChange}) => {
     }
     case 'value': {
       Component = ActionValue;
+      break;
+    }
+    case 'variable': {
+      Component = ActionVariableValue;
       break;
     }
     case '':

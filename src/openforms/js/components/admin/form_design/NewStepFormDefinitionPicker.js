@@ -9,11 +9,12 @@ import FormRow from '../forms/FormRow';
 import {SubmitAction} from '../forms/ActionButton';
 import Select from '../forms/Select';
 import SubmitRow from '../forms/SubmitRow';
-import {FormDefinitionsContext} from './Context';
+import {FormContext} from './Context';
 
 const NewStepFormDefinitionPicker = ({onReplace}) => {
   const intl = useIntl();
-  const formDefinitions = useContext(FormDefinitionsContext);
+  const formContext = useContext(FormContext);
+  const formDefinitions = formContext.formDefinitions;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFormDefinition, setSelectedFormDefinition] = useState('');
   const [validationErrors, setValidationErrors] = useState([]);
@@ -77,7 +78,7 @@ const NewStepFormDefinitionPicker = ({onReplace}) => {
         }}
       >
         <FAIcon
-          icon="pencil-square-o"
+          icon="pen-to-square"
           extraClassname="fa-2x"
           title={intl.formatMessage({
             description: 'create form definition icon title',

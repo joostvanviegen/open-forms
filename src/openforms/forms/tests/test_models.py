@@ -3,7 +3,12 @@ from django.test import TestCase
 from django.utils.translation import ugettext as _
 
 from ..models import Form, FormDefinition, FormStep
-from .factories import FormDefinitionFactory, FormFactory, FormStepFactory
+from .factories import (
+    FormDefinitionFactory,
+    FormFactory,
+    FormLogicFactory,
+    FormStepFactory,
+)
 
 
 class FormTestCase(TestCase):
@@ -62,7 +67,12 @@ class FormTestCase(TestCase):
             configuration={
                 "display": "form",
                 "components": [
-                    {"key": "aaa", "label": "AAA", "confirmationRecipient": True},
+                    {
+                        "key": "aaa",
+                        "type": "textfield",
+                        "label": "AAA",
+                        "confirmationRecipient": True,
+                    },
                 ],
             }
         )
@@ -72,6 +82,7 @@ class FormTestCase(TestCase):
                 "components": [
                     {
                         "key": "bbb",
+                        "type": "textfield",
                         "label": "BBB",
                         "confirmationRecipient": True,
                         "multiple": True,
@@ -79,8 +90,8 @@ class FormTestCase(TestCase):
                 ],
             }
         )
-        step_1 = FormStepFactory.create(form=form, form_definition=def_1)
-        step_2 = FormStepFactory.create(form=form, form_definition=def_2)
+        FormStepFactory.create(form=form, form_definition=def_1)
+        FormStepFactory.create(form=form, form_definition=def_2)
 
         actual = form.get_keys_for_email_confirmation()
         self.assertEqual(set(actual), {"aaa", "bbb"})
@@ -92,7 +103,11 @@ class FormTestCase(TestCase):
             configuration={
                 "display": "form",
                 "components": [
-                    {"key": "aaa", "label": "AAA"},
+                    {
+                        "key": "aaa",
+                        "label": "AAA",
+                        "type": "textfield",
+                    },
                 ],
             }
         )
@@ -103,10 +118,12 @@ class FormTestCase(TestCase):
                     {
                         "key": "bbb",
                         "label": "BBB",
+                        "type": "textfield",
                         "multiple": True,
                         "components": [
                             {
                                 "key": "ccc",
+                                "type": "textfield",
                                 "label": "CCC",
                                 "multiple": True,
                             },
@@ -115,20 +132,26 @@ class FormTestCase(TestCase):
                 ],
             }
         )
-        step_1 = FormStepFactory.create(form=form, form_definition=def_1)
-        step_2 = FormStepFactory.create(form=form, form_definition=def_2)
+        FormStepFactory.create(form=form, form_definition=def_1)
+        FormStepFactory.create(form=form, form_definition=def_2)
 
         with self.subTest("recursive"):
             actual = list(form.iter_components(recursive=True))
             expected = [
-                {"key": "aaa", "label": "AAA"},
+                {
+                    "key": "aaa",
+                    "label": "AAA",
+                    "type": "textfield",
+                },
                 {
                     "key": "bbb",
+                    "type": "textfield",
                     "label": "BBB",
                     "multiple": True,
                     "components": [
                         {
                             "key": "ccc",
+                            "type": "textfield",
                             "label": "CCC",
                             "multiple": True,
                         },
@@ -137,6 +160,7 @@ class FormTestCase(TestCase):
                 {
                     "key": "ccc",
                     "label": "CCC",
+                    "type": "textfield",
                     "multiple": True,
                 },
             ]
@@ -146,14 +170,20 @@ class FormTestCase(TestCase):
         with self.subTest("non-recursive"):
             actual = list(form.iter_components(recursive=False))
             expected = [
-                {"key": "aaa", "label": "AAA"},
+                {
+                    "key": "aaa",
+                    "label": "AAA",
+                    "type": "textfield",
+                },
                 {
                     "key": "bbb",
+                    "type": "textfield",
                     "label": "BBB",
                     "multiple": True,
                     "components": [
                         {
                             "key": "ccc",
+                            "type": "textfield",
                             "label": "CCC",
                             "multiple": True,
                         },
@@ -171,7 +201,11 @@ class FormTestCase(TestCase):
             configuration={
                 "display": "form",
                 "components": [
-                    {"key": "bbb", "label": "BBB"},
+                    {
+                        "key": "bbb",
+                        "label": "BBB",
+                        "type": "textfield",
+                    },
                 ],
             }
         )
@@ -179,7 +213,11 @@ class FormTestCase(TestCase):
             configuration={
                 "display": "form",
                 "components": [
-                    {"key": "aaa", "label": "AAA"},
+                    {
+                        "key": "aaa",
+                        "label": "AAA",
+                        "type": "textfield",
+                    },
                 ],
             }
         )
@@ -192,8 +230,16 @@ class FormTestCase(TestCase):
         # check we fixed the ordering of form steps
         actual = list(form.iter_components(recursive=True))
         expected = [
-            {"key": "aaa", "label": "AAA"},
-            {"key": "bbb", "label": "BBB"},
+            {
+                "key": "aaa",
+                "label": "AAA",
+                "type": "textfield",
+            },
+            {
+                "key": "bbb",
+                "label": "BBB",
+                "type": "textfield",
+            },
         ]
 
         self.assertEqual(actual, expected)
@@ -201,10 +247,10 @@ class FormTestCase(TestCase):
 
 class FormQuerysetTestCase(TestCase):
     def test_queryset_live(self):
-        form1 = FormFactory.create(active=True, deleted_=True)
+        FormFactory.create(active=True, deleted_=True)
         form2 = FormFactory.create(active=True)
-        form3 = FormFactory.create(active=False, deleted_=True)
-        form4 = FormFactory.create(active=False)
+        FormFactory.create(active=False, deleted_=True)
+        FormFactory.create(active=False)
 
         active = list(Form.objects.live())
         self.assertEqual(active, [form2])
@@ -307,3 +353,31 @@ class FormStepTestCase(TestCase):
     def test_str_no_relation(self):
         step = FormStep()
         self.assertEqual(str(step), "FormStep object (None)")
+
+
+class FormLogicTests(TestCase):
+    def test_block_form_logic_trigger_step_other_form(self):
+        form1, form2 = FormFactory.create_batch(2)
+        step = FormStepFactory.create(form=form1)
+        other_step = FormStepFactory.create(form=form2)
+
+        with self.subTest("Invalid configuration"):
+            logic = FormLogicFactory.build(form=form1)
+            logic.trigger_from_step = other_step
+            with self.assertRaises(ValidationError):
+                logic.clean()
+
+        with self.subTest("Valid configuration"):
+            logic = FormLogicFactory.build(form=form1)
+            logic.trigger_from_step = step
+            try:
+                logic.clean()
+            except ValidationError:
+                self.fail("Should be allowed")
+
+        with self.subTest("No trigger from step configured"):
+            logic = FormLogicFactory.build(form=form1)
+            try:
+                logic.clean()
+            except ValidationError:
+                self.fail("Should be allowed")

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Open Forms API
-  version: 1.1.0
+  version: 1.2.0-alpha
   description: |2
 
     Open Forms provides an API to manage multi-page or multi-step forms.
@@ -267,6 +267,51 @@ paths:
           headers:
             X-Session-Expires-In:
               $ref: '#/components/headers/X-Session-Expires-In'
+  /api/v1/categories:
+    get:
+      operationId: categories_list
+      tags:
+      - categories
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+  /api/v1/categories/{uuid}:
+    get:
+      operationId: categories_retrieve
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - categories
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
   /api/v1/config/privacy_policy_info:
     get:
       operationId: config_privacy_policy_info_retrieve
@@ -282,6 +327,201 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrivacyPolicyInfo'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+  /api/v1/dmn/decision-definitions:
+    get:
+      operationId: dmn_decision_definitions_list
+      description: List the available decision definitions for a given plugin.
+      summary: List available decision definitions
+      parameters:
+      - in: query
+        name: engine
+        schema:
+          type: string
+          enum:
+          - camunda7
+        description: Identifier of the decision engine to query. Note that some engines
+          may be disabled at runtime.
+        required: true
+      tags:
+      - dmn
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DecisionDefinition'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+  /api/v1/dmn/decision-definitions/versions:
+    get:
+      operationId: dmn_decision_definitions_versions_list
+      description: |-
+        List the available versions of a given definition.
+
+        If the selected engine supports multiple versions of decision definitions, they can
+        be retrieved through this endpoint. You must specify the engine and selected
+        definition ID.
+      summary: List available decision definition versions
+      parameters:
+      - in: query
+        name: definition
+        schema:
+          type: string
+        description: Identifier of the definition to retrieve available versions for.
+        required: true
+      - in: query
+        name: engine
+        schema:
+          type: string
+          enum:
+          - camunda7
+        description: Identifier of the decision engine to query. Note that some engines
+          may be disabled at runtime.
+        required: true
+      tags:
+      - dmn
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DecisionDefinitionVersion'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+  /api/v1/dmn/decision-definitions/xml:
+    get:
+      operationId: dmn_decision_definitions_xml_retrieve
+      summary: Retrieve the decision definition XML
+      parameters:
+      - in: query
+        name: definition
+        schema:
+          type: string
+        description: Identifier of the definition to retrieve available versions for.
+        required: true
+      - in: query
+        name: engine
+        schema:
+          type: string
+          enum:
+          - camunda7
+        description: Identifier of the decision engine to query. Note that some engines
+          may be disabled at runtime.
+        required: true
+      - in: query
+        name: version
+        schema:
+          type: string
+      tags:
+      - dmn
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionDefinitionXML'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+  /api/v1/dmn/plugins:
+    get:
+      operationId: dmn_plugins_list
+      description: List all decision plugins that have been registered.
+      summary: List available decision plugins
+      tags:
+      - dmn
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DecisionPlugin'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
           description: ''
           headers:
             X-Session-Expires-In:
@@ -538,6 +778,7 @@ paths:
         - `paymentBackend`
         - `paymentBackendOptions`
         - `product`
+        - `category`
         - `isDeleted`
         - `submissionConfirmationTemplate`
         - `submissionsRemovalOptions`
@@ -594,6 +835,7 @@ paths:
         - `paymentBackend`
         - `paymentBackendOptions`
         - `product`
+        - `category`
         - `isDeleted`
         - `submissionConfirmationTemplate`
         - `submissionsRemovalOptions`
@@ -996,6 +1238,7 @@ paths:
         - `paymentBackend`
         - `paymentBackendOptions`
         - `product`
+        - `category`
         - `isDeleted`
         - `submissionConfirmationTemplate`
         - `submissionsRemovalOptions`
@@ -1056,6 +1299,7 @@ paths:
         - `paymentBackend`
         - `paymentBackendOptions`
         - `product`
+        - `category`
         - `isDeleted`
         - `submissionConfirmationTemplate`
         - `submissionsRemovalOptions`
@@ -1122,6 +1366,7 @@ paths:
         - `paymentBackend`
         - `paymentBackendOptions`
         - `product`
+        - `category`
         - `isDeleted`
         - `submissionConfirmationTemplate`
         - `submissionsRemovalOptions`
@@ -2210,10 +2455,9 @@ paths:
   /api/v1/submissions/{report_id}/{token}/download:
     get:
       operationId: submissions_download_retrieve
-      description: Download het document met de ingezonden gegevens, in PDF vorm.
-        Dit document kan alleen worden opgevraagd indien het juiste token is meegegeven,
-        die hoort bij de formulier sessie. Nadat het document is gedownload, of na
-        1 dagen, is het token niet meer te gebruiken.
+      description: Download the PDF report containing the submission data. The endpoint
+        requires a token which is tied to the submission from the session. The token
+        automatically expires after 1 day(s).
       summary: Download the PDF report
       parameters:
       - in: path
@@ -2312,6 +2556,33 @@ paths:
           headers:
             X-Session-Expires-In:
               $ref: '#/components/headers/X-Session-Expires-In'
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionStep'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
   /api/v1/submissions/{submission_uuid}/steps/{step_uuid}/_check_logic:
     post:
       operationId: submissions_steps__check_logic_create
@@ -2343,6 +2614,59 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SubmissionStateLogic'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+  /api/v1/submissions/{submission_uuid}/steps/{step_uuid}/validate:
+    post:
+      operationId: submissions_steps_validate_create
+      description: |-
+        Validate the submission step data before persisting.
+
+        This endpoint runs the same validation logic as the PUT endpoint to store the
+        data. For invalid data, you will get an HTTP 400 response with error details.
+      summary: Store submission step data
+      parameters:
+      - in: path
+        name: step_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: submission_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - submissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmissionStep'
+      responses:
+        '204':
+          description: No response body
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
           description: ''
           headers:
             X-Session-Expires-In:
@@ -2758,6 +3082,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationResult'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+  /api/v1/variables/static:
+    get:
+      operationId: variables_static_list
+      description: List the static form variables that every form should have
+      summary: Get static form variables
+      tags:
+      - variables
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FormVariable'
+          description: ''
+          headers:
+            X-Session-Expires-In:
+              $ref: '#/components/headers/X-Session-Expires-In'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
           description: ''
           headers:
             X-Session-Expires-In:
@@ -3493,6 +3847,34 @@ components:
           type: string
       required:
       - domein
+    Category:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          readOnly: true
+        name:
+          type: string
+          description: Human readable name
+          maxLength: 64
+        uuid:
+          type: string
+          format: uuid
+        ancestors:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              uuid:
+                type: string
+          readOnly: true
+      required:
+      - ancestors
+      - name
+      - url
     CompletionValidation:
       type: object
       properties:
@@ -3581,6 +3963,54 @@ components:
           format: date
       required:
       - date
+    DecisionDefinition:
+      type: object
+      properties:
+        id:
+          type: string
+          title: Identifier
+          description: The (unique) identifier pointing to a particular decision definition.
+        label:
+          type: string
+          description: Human readable name/label identifying the decision definition.
+      required:
+      - id
+      - label
+    DecisionDefinitionVersion:
+      type: object
+      properties:
+        id:
+          type: string
+          title: version identifier
+          description: The (unique) identifier pointing to a particular decision definition
+            version.
+        label:
+          type: string
+          description: Textual representation of the definition version.
+      required:
+      - id
+      - label
+    DecisionDefinitionXML:
+      type: object
+      properties:
+        xml:
+          type: string
+          title: DMN XML
+          description: If no XML can be obtained, the value will be an empty string.
+      required:
+      - xml
+    DecisionPlugin:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique plugin identifier
+        label:
+          type: string
+          description: The human-readable name for a plugin.
+      required:
+      - id
+      - label
     Exception:
       type: object
       description: |-
@@ -3644,7 +4074,7 @@ components:
 
         Note that this schema is used for both non-admin users filling out forms and
         admin users designing forms. The fields that are only relevant for admin users are:
-        `internalName`, `registrationBackend`, `registrationBackendOptions`, `paymentBackend`, `paymentBackendOptions`, `product`, `isDeleted`, `submissionConfirmationTemplate`, `submissionsRemovalOptions`, `confirmationEmailTemplate`, `confirmationEmailOption`, `displayMainWebsiteLink`.
+        `internalName`, `registrationBackend`, `registrationBackendOptions`, `paymentBackend`, `paymentBackendOptions`, `product`, `category`, `isDeleted`, `submissionConfirmationTemplate`, `submissionsRemovalOptions`, `confirmationEmailTemplate`, `confirmationEmailOption`, `displayMainWebsiteLink`.
       properties:
         uuid:
           type: string
@@ -3714,6 +4144,11 @@ components:
           type: string
           format: uri
           readOnly: true
+        category:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to the category in the Open Forms API
         steps:
           type: array
           items:
@@ -3928,6 +4363,18 @@ components:
           description: The trigger expression to determine if the actions should execute
             or not. Note that this must be a valid JsonLogic expression, and the first
             operand must be a reference to a component in the form.
+        order:
+          type: integer
+          description: Order of the rule relative to the form it belongs to. Logic
+            rules are evaluated in this order. Note that specifying a value for the
+            order here will cause the rules before/after this rule to be re-calculated.
+        triggerFromStep:
+          type: string
+          format: uri
+          nullable: true
+          description: When set, the trigger will only be checked once the specified
+            step is reached. This means the rule will never trigger for steps before
+            the specified trigger step. If unset, the trigger will always be checked.
         actions:
           type: array
           items:
@@ -3942,6 +4389,7 @@ components:
       - actions
       - form
       - jsonLogicTrigger
+      - order
       - url
       - uuid
     FormPriceLogic:
@@ -4049,12 +4497,10 @@ components:
         name:
           type: string
           description: Name of the variable
-          maxLength: 100
         key:
           type: string
           description: Key of the variable, should be unique with the form.
-          maxLength: 100
-          pattern: ^[-a-zA-Z0-9_]+$
+          pattern: ^\w[\w.\-]*\w$
         source:
           allOf:
           - $ref: '#/components/schemas/SourceEnum'
@@ -4187,6 +4633,7 @@ components:
           property: '#/components/schemas/LogicActionPolymorphicLogicPropertyAction'
           value: '#/components/schemas/LogicActionPolymorphicLogicValueAction'
           step-not-applicable: '#/components/schemas/LogicActionPolymorphicGenericObject'
+          variable: '#/components/schemas/LogicActionPolymorphicLogicValueAction'
     LogicActionPolymorphicGenericObject:
       allOf:
       - $ref: '#/components/schemas/LogicActionPolymorphicShared'
@@ -4232,6 +4679,7 @@ components:
       - disable-next
       - property
       - value
+      - variable
       type: string
     LogicComponentAction:
       type: object
@@ -4242,6 +4690,10 @@ components:
           description: 'Sleutel van de Form.io-component waarop de actie van toepassing
             is. Dit veld is optioneel als het actietype `disable-next` is, anders
             vereist. '
+        variable:
+          type: string
+          title: Key of the target variable
+          description: Key of the target variable whose value will be changed.
         formStep:
           type: string
           format: uri
@@ -4474,7 +4926,7 @@ components:
 
         Note that this schema is used for both non-admin users filling out forms and
         admin users designing forms. The fields that are only relevant for admin users are:
-        `internalName`, `registrationBackend`, `registrationBackendOptions`, `paymentBackend`, `paymentBackendOptions`, `product`, `isDeleted`, `submissionConfirmationTemplate`, `submissionsRemovalOptions`, `confirmationEmailTemplate`, `confirmationEmailOption`, `displayMainWebsiteLink`.
+        `internalName`, `registrationBackend`, `registrationBackendOptions`, `paymentBackend`, `paymentBackendOptions`, `product`, `category`, `isDeleted`, `submissionConfirmationTemplate`, `submissionsRemovalOptions`, `confirmationEmailTemplate`, `confirmationEmailOption`, `displayMainWebsiteLink`.
       properties:
         uuid:
           type: string
@@ -4544,6 +4996,11 @@ components:
           type: string
           format: uri
           readOnly: true
+        category:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to the category in the Open Forms API
         steps:
           type: array
           items:
@@ -4644,6 +5101,18 @@ components:
           description: The trigger expression to determine if the actions should execute
             or not. Note that this must be a valid JsonLogic expression, and the first
             operand must be a reference to a component in the form.
+        order:
+          type: integer
+          description: Order of the rule relative to the form it belongs to. Logic
+            rules are evaluated in this order. Note that specifying a value for the
+            order here will cause the rules before/after this rule to be re-calculated.
+        triggerFromStep:
+          type: string
+          format: uri
+          nullable: true
+          description: When set, the trigger will only be checked once the specified
+            step is reached. This means the rule will never trigger for steps before
+            the specified trigger step. If unset, the trigger will always be checked.
         actions:
           type: array
           items:

@@ -1,7 +1,10 @@
+import logging
 import os.path
 import re
+from collections import defaultdict
+from dataclasses import dataclass
 from datetime import timedelta
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Iterator, Optional, Tuple
 from urllib.parse import urlparse
 
 from django.conf import settings
@@ -9,18 +12,24 @@ from django.core.files.temp import NamedTemporaryFile
 from django.urls import Resolver404, resolve
 from django.utils.translation import gettext as _
 
+import magic
 import PIL
 from glom import glom
 from PIL import Image
+from rest_framework.exceptions import ErrorDetail, ValidationError
 
 from openforms.api.exceptions import RequestEntityTooLarge
 from openforms.conf.utils import Filesize
+from openforms.formio.service import mimetype_allowed
+from openforms.formio.typing import Component
 from openforms.submissions.models import (
     Submission,
     SubmissionFileAttachment,
     SubmissionStep,
     TemporaryFileUpload,
 )
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_IMAGE_MAX_SIZE = (10000, 10000)
 
@@ -76,16 +85,98 @@ def append_file_num_postfix(
     return f"{new_name}{postfix}{ext}"
 
 
+@dataclass
+class UploadContext:
+    upload: TemporaryFileUpload
+    component: Component
+    index: int  # one-based
+    form_key: str  # formio key
+    num_uploads: int
+
+
+def iter_step_uploads(
+    submission_step: SubmissionStep, data=None
+) -> Iterator[UploadContext]:
+    """
+    Iterate over all the uploads for a given submission step.
+
+    Yield every uploaded file and its context within the form step for further
+    processing.
+    """
+    data = data or submission_step.data
+    components = list(submission_step.form_step.iter_components(recursive=True))
+    uploads = resolve_uploads_from_data(components, data)
+    for key, (component, upload_instances) in uploads.items():
+        # formio sends a list of uploads even with multiple=False
+        for i, upload in enumerate(upload_instances, start=1):
+            yield UploadContext(
+                upload=upload,
+                form_key=key,
+                component=component,
+                index=i,
+                num_uploads=len(upload_instances),
+            )
+
+
+def validate_uploads(submission_step: SubmissionStep, data: Optional[dict]) -> None:
+    """
+    Validate the file uploads in the submission step data.
+
+    File uploads are stored in a temporary file uploads table and the references to them
+    are included in the step submission data. This function validates that the actual
+    content and metadata of files conforms to the configured file upload components.
+    """
+    validation_errors = defaultdict(list)
+    for upload_context in iter_step_uploads(submission_step, data=data):
+        upload, component, key = (
+            upload_context.upload,
+            upload_context.component,
+            upload_context.form_key,
+        )
+        allowed_mime_types = glom(component, "file.type", default=[])
+
+        # perform content type validation
+        with upload.content.open("rb") as infile:
+            # 2048 bytes per recommendation of python-magic
+            file_mime_type = magic.from_buffer(infile.read(2048), mime=True)
+
+        invalid_file_type_error = ErrorDetail(
+            _("The file '{filename}' is not a valid file type.").format(
+                filename=upload.file_name
+            ),
+            code="invalid",
+        )
+
+        if upload.content_type != file_mime_type:
+            validation_errors[key].append(invalid_file_type_error)
+            continue
+
+        # validate that the mime type passes the allowlist
+        if not mimetype_allowed(file_mime_type, allowed_mime_types):
+            logger.warning(
+                "Blocking submission upload %d because of invalid mime type check",
+                upload.id,
+            )
+            validation_errors[key].append(invalid_file_type_error)
+            continue
+
+    if validation_errors:
+        raise ValidationError(validation_errors)
+
+
 def attach_uploads_to_submission_step(submission_step: SubmissionStep) -> list:
     # circular import
     from .tasks import resize_submission_attachment
 
-    components = list(submission_step.form_step.iter_components(recursive=True))
-
-    uploads = resolve_uploads_from_data(components, submission_step.data)
-
     result = list()
-    for key, (component, uploads) in uploads.items():
+
+    for upload_context in iter_step_uploads(submission_step):
+        upload, component, key = (
+            upload_context.upload,
+            upload_context.component,
+            upload_context.form_key,
+        )
+
         # grab resize settings
         resize_apply = glom(component, "of.image.resize.apply", default=False)
         resize_size = (
@@ -100,31 +191,32 @@ def attach_uploads_to_submission_step(submission_step: SubmissionStep) -> list:
 
         base_name = glom(component, "file.name", default="")
 
-        # formio sends a list of uploads even with multiple=False
-        for i, upload in enumerate(uploads, start=1):
-            if upload.file_size > file_max_size:
-                raise RequestEntityTooLarge(
-                    _(
-                        "Upload {uuid} exceeds the maximum upload size of {max_size}b"
-                    ).format(
-                        uuid=upload.uuid,
-                        max_size=file_max_size,
-                    ),
-                )
-
-            file_name = append_file_num_postfix(
-                upload.file_name, base_name, i, len(uploads)
+        if upload.file_size > file_max_size:
+            raise RequestEntityTooLarge(
+                _(
+                    "Upload {uuid} exceeds the maximum upload size of {max_size}b"
+                ).format(
+                    uuid=upload.uuid,
+                    max_size=file_max_size,
+                ),
             )
 
-            attachment, created = SubmissionFileAttachment.objects.create_from_upload(
-                submission_step, key, upload, file_name=file_name
-            )
-            result.append((attachment, created))
+        file_name = append_file_num_postfix(
+            upload.file_name,
+            base_name,
+            upload_context.index,
+            upload_context.num_uploads,
+        )
 
-            if created and resize_apply and resize_size:
-                # NOTE there is a possible race-condition if user completes a submission before this resize task is done
-                # see https://github.com/open-formulieren/open-forms/issues/507
-                resize_submission_attachment.delay(attachment.id, resize_size)
+        attachment, created = SubmissionFileAttachment.objects.create_from_upload(
+            submission_step, key, upload, file_name=file_name
+        )
+        result.append((attachment, created))
+
+        if created and resize_apply and resize_size:
+            # NOTE there is a possible race-condition if user completes a submission before this resize task is done
+            # see https://github.com/open-formulieren/open-forms/issues/507
+            resize_submission_attachment.delay(attachment.id, resize_size)
 
     return result
 

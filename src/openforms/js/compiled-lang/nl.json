@@ -91,6 +91,12 @@
       "value": "Opties"
     }
   ],
+  "2emuJW": [
+    {
+      "type": 0,
+      "value": "Cancel"
+    }
+  ],
   "2uIYst": [
     {
       "type": 0,
@@ -349,6 +355,12 @@
       "value": "Is not sensitive"
     }
   ],
+  "9AQi2/": [
+    {
+      "type": 0,
+      "value": "Please select the logic type:"
+    }
+  ],
   "9N67XB": [
     {
       "type": 0,
@@ -587,10 +599,10 @@
       "value": "Sessie vervallen"
     }
   ],
-  "Dwnqdq": [
+  "DqG0YS": [
     {
       "type": 0,
-      "value": "Geavanceerde logica"
+      "value": "Enable from step:"
     }
   ],
   "DxGKNm": [
@@ -629,6 +641,12 @@
       "value": "Modus"
     }
   ],
+  "FayNPY": [
+    {
+      "type": 0,
+      "value": "Simple"
+    }
+  ],
   "FceidS": [
     {
       "type": 0,
@@ -639,6 +657,12 @@
     {
       "type": 0,
       "value": "Tekst"
+    }
+  ],
+  "G1JHUM": [
+    {
+      "type": 0,
+      "value": "Cancel rule creation"
     }
   ],
   "G2rpx2": [
@@ -729,6 +753,20 @@
     {
       "type": 0,
       "value": "Gebruikt het bevestigingsmailsjabloon zoals hier is opgegeven."
+    }
+  ],
+  "HuAm1K": [
+    {
+      "type": 0,
+      "value": "and the step \""
+    },
+    {
+      "type": 1,
+      "value": "step"
+    },
+    {
+      "type": 0,
+      "value": "\" has been reached"
     }
   ],
   "I0bgsg": [
@@ -833,6 +871,12 @@
     {
       "type": 0,
       "value": "Inhoud"
+    }
+  ],
+  "KYTAJZ": [
+    {
+      "type": 0,
+      "value": "(checked for every step)"
     }
   ],
   "KjDolH": [
@@ -957,6 +1001,12 @@
       "value": ". Verleng uw sessie indien u wenst door te gaan."
     }
   ],
+  "OobRu3": [
+    {
+      "type": 0,
+      "value": "Advanced"
+    }
+  ],
   "OvqnXR": [
     {
       "type": 0,
@@ -1065,6 +1115,12 @@
     {
       "type": 0,
       "value": "Initial value"
+    }
+  ],
+  "RvJXSo": [
+    {
+      "type": 0,
+      "value": "change the value of a variable/component"
     }
   ],
   "S6eF5o": [
@@ -1357,6 +1413,12 @@
       "value": "Verplaats omhoog"
     }
   ],
+  "c0dfYJ": [
+    {
+      "type": 0,
+      "value": "Build a JsonLogic expression using raw JSON."
+    }
+  ],
   "c1XyJ4": [
     {
       "type": 0,
@@ -1417,6 +1479,12 @@
       "value": "Exporteer dit formulier"
     }
   ],
+  "dWNClE": [
+    {
+      "type": 0,
+      "value": "Optional category for internal organisation."
+    }
+  ],
   "ddDA6+": [
     {
       "type": 0,
@@ -1451,6 +1519,12 @@
     {
       "type": 0,
       "value": "Weet u zeker dat u deze regel wil verwijderen?"
+    }
+  ],
+  "eLDxD5": [
+    {
+      "type": 0,
+      "value": "Advanced options"
     }
   ],
   "evbysh": [
@@ -1637,6 +1711,12 @@
       "value": "Naam"
     }
   ],
+  "k5JYxu": [
+    {
+      "type": 0,
+      "value": "Show form"
+    }
+  ],
   "k9CT3p": [
     {
       "type": 0,
@@ -1653,6 +1733,12 @@
     {
       "type": 0,
       "value": "uitgeschakeld"
+    }
+  ],
+  "koVh3m": [
+    {
+      "type": 0,
+      "value": "Category"
     }
   ],
   "l1fi1t": [
@@ -1707,6 +1793,12 @@
     {
       "type": 0,
       "value": "Versie"
+    }
+  ],
+  "nHFMXn": [
+    {
+      "type": 0,
+      "value": "Trigger condition"
     }
   ],
   "naInSZ": [
@@ -1853,6 +1945,12 @@
       "value": "Formulier configureren"
     }
   ],
+  "tRCXsR": [
+    {
+      "type": 0,
+      "value": "Select components and conditions using drop-downs to build a JsonLogic expression."
+    }
+  ],
   "tjRtQk": [
     {
       "type": 0,
@@ -1875,6 +1973,26 @@
     {
       "type": 0,
       "value": "Aantal dagen dat een voltooide inzending bewaard blijft. Laat leeg om de waarde van de algemene configuratie te gebruiken."
+    }
+  ],
+  "uiliGe": [
+    {
+      "type": 0,
+      "value": "The logic rules you set up here are executed in the order that they are defined. Please consult the "
+    },
+    {
+      "children": [
+        {
+          "type": 0,
+          "value": "manual"
+        }
+      ],
+      "type": 8,
+      "value": "docs"
+    },
+    {
+      "type": 0,
+      "value": " for more information."
     }
   ],
   "ukFB7B": [

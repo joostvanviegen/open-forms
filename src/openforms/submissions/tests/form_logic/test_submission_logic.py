@@ -2,14 +2,17 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
 
-from openforms.forms.tests.factories import FormFactory, FormStepFactory
+from openforms.forms.tests.factories import (
+    FormFactory,
+    FormLogicFactory,
+    FormStepFactory,
+)
 
 from ..factories import SubmissionFactory, SubmissionStepFactory
-from ..mixins import SubmissionsMixin
-from .factories import FormLogicFactory
+from ..mixins import SubmissionsMixin, VariablesTestMixin
 
 
-class CheckLogicSubmissionTest(SubmissionsMixin, APITestCase):
+class CheckLogicSubmissionTest(VariablesTestMixin, SubmissionsMixin, APITestCase):
     def test_check_logic_on_whole_submission(self):
         form = FormFactory.create()
         step1 = FormStepFactory.create(

@@ -26,53 +26,80 @@ def _translate_exceptions(exc):
     return exc
 
 
-def get_validation_errors(validation_errors: dict):
-    for field_name, error_list in validation_errors.items():
-        # nested validation for fields where many=True
-        if isinstance(error_list, list):
-            for i, nested_error_dict in enumerate(error_list):
-                if isinstance(nested_error_dict, dict):
-                    for err in get_validation_errors(nested_error_dict):
-                        err[
-                            "name"
-                        ] = f"{underscore_to_camel(field_name)}.{i}.{err['name']}"
-                        yield err
-
-        # nested validation - recursively call the function
-        if isinstance(error_list, dict):
-            for err in get_validation_errors(error_list):
-                err["name"] = f"{underscore_to_camel(field_name)}.{err['name']}"
+# TODO: see if we can re-use openforms.submissions.parsers.IgnoreDataJSONRenderer for
+# the camelize keys skipping?
+#
+# We are ignoring the 'data' key in snake -> camel case conversion. This is the key
+# that's used to submit formio data to the backend, which contains sub-keys set by
+# end-users and can't be automatically converted. Consequently, error messages for
+# those sub-keys should not be transformed.
+def get_validation_errors(validation_errors: Union[dict, list], camelize=True):
+    if isinstance(validation_errors, list):
+        for i, item in enumerate(validation_errors):
+            for err in get_validation_errors(item):
+                err["name"] = f"{i}.{err['name']}"
                 yield err
-            continue
+    else:
+        for field_name, error_list in validation_errors.items():
+            new_name = underscore_to_camel(field_name) if camelize else field_name
 
-        if isinstance(error_list, exceptions.ErrorDetail):
-            error_list = [error_list]
+            # nested validation for fields where many=True
+            if isinstance(error_list, list):
+                for i, nested_error_dict in enumerate(error_list):
+                    if isinstance(nested_error_dict, dict):
+                        for err in get_validation_errors(
+                            nested_error_dict, camelize=field_name != "data"
+                        ):
+                            err["name"] = f"{new_name}.{i}.{err['name']}"
+                            yield err
 
-        for error in error_list:
-            if isinstance(error, dict):
+            # nested validation - recursively call the function
+            if isinstance(error_list, dict):
+                for err in get_validation_errors(
+                    error_list, camelize=field_name != "data"
+                ):
+                    err["name"] = f"{new_name}.{err['name']}"
+                    yield err
                 continue
 
-            if isinstance(error, list):
-                for err in error:
+            if isinstance(error_list, exceptions.ErrorDetail):
+                error_list = [error_list]
+
+            for error in error_list:
+                if isinstance(error, dict):
+                    continue
+
+                if isinstance(error, list):
+                    for err in error:
+                        yield OrderedDict(
+                            [
+                                # see https://tools.ietf.org/html/rfc7807#section-3.1
+                                # ('type', 'about:blank'),
+                                (
+                                    "name",
+                                    underscore_to_camel(field_name)
+                                    if camelize
+                                    else field_name,
+                                ),
+                                ("code", err.code),
+                                ("reason", str(err)),
+                            ]
+                        )
+                else:
                     yield OrderedDict(
                         [
                             # see https://tools.ietf.org/html/rfc7807#section-3.1
                             # ('type', 'about:blank'),
-                            ("name", underscore_to_camel(field_name)),
-                            ("code", err.code),
-                            ("reason", str(err)),
+                            (
+                                "name",
+                                underscore_to_camel(field_name)
+                                if camelize
+                                else field_name,
+                            ),
+                            ("code", error.code),
+                            ("reason", str(error)),
                         ]
                     )
-            else:
-                yield OrderedDict(
-                    [
-                        # see https://tools.ietf.org/html/rfc7807#section-3.1
-                        # ('type', 'about:blank'),
-                        ("name", underscore_to_camel(field_name)),
-                        ("code", error.code),
-                        ("reason", str(error)),
-                    ]
-                )
 
 
 class HandledException:
@@ -88,6 +115,8 @@ class HandledException:
         if isinstance(self.exc, exceptions.ValidationError):
             # ErrorDetail from DRF is a str subclass
             data = getattr(self.response, "data", {})
+            if isinstance(data, list):
+                return ""
             return data.get("detail", "")
         # any other exception -> return the raw ErrorDetails object so we get
         # access to the code later

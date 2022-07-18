@@ -69,6 +69,11 @@
     "description": "Registration backend options label",
     "originalDefault": "Registration backend options"
   },
+  "2emuJW": {
+    "defaultMessage": "Cancel",
+    "description": "Cancel link",
+    "originalDefault": "Cancel"
+  },
   "2uIYst": {
     "defaultMessage": "The process definition for which to start a process instance.",
     "description": "Camunda 'process definition' help text",
@@ -224,6 +229,11 @@
     "description": "Is not sensitive icon title",
     "originalDefault": "Is not sensitive"
   },
+  "9AQi2/": {
+    "defaultMessage": "Please select the logic type:",
+    "description": "Logic type selection label",
+    "originalDefault": "Please select the logic type:"
+  },
   "9N67XB": {
     "defaultMessage": "Invalid JSON syntax",
     "description": "Advanced logic rule invalid json message",
@@ -369,10 +379,10 @@
     "description": "Modal title session expired",
     "originalDefault": "Session expired"
   },
-  "Dwnqdq": {
-    "defaultMessage": "Advanced Logic",
-    "description": "Advanced logic fieldset title",
-    "originalDefault": "Advanced Logic"
+  "DqG0YS": {
+    "defaultMessage": "Enable from step:",
+    "description": "'Trigger from step' label",
+    "originalDefault": "Enable from step:"
   },
   "DxGKNm": {
     "defaultMessage": "Logic",
@@ -404,6 +414,11 @@
     "description": "Pricing mode label",
     "originalDefault": "Mode"
   },
+  "FayNPY": {
+    "defaultMessage": "Simple",
+    "description": "Simple logic type",
+    "originalDefault": "Simple"
+  },
   "FceidS": {
     "defaultMessage": "is not equal to",
     "description": "\"!=\" operator description",
@@ -413,6 +428,11 @@
     "defaultMessage": "Text",
     "description": "Interpolation expression field label",
     "originalDefault": "Text"
+  },
+  "G1JHUM": {
+    "defaultMessage": "Cancel rule creation",
+    "description": "Cancel link help",
+    "originalDefault": "Cancel rule creation"
   },
   "G2rpx2": {
     "defaultMessage": "Whether the step progression should be displayed in the UI or not.",
@@ -488,6 +508,11 @@
     "defaultMessage": "Will send the email specified.",
     "description": "Form confirmation email help text",
     "originalDefault": "Will send the email specified."
+  },
+  "HuAm1K": {
+    "defaultMessage": "and the step \"{step}\" has been reached",
+    "description": "Additional 'trigger from step' condition",
+    "originalDefault": "and the step \"{step}\" has been reached"
   },
   "I0bgsg": {
     "defaultMessage": "Successful Submissions Removal Method field label",
@@ -568,6 +593,11 @@
     "defaultMessage": "Content",
     "description": "Confirmation Email Content label",
     "originalDefault": "Content"
+  },
+  "KYTAJZ": {
+    "defaultMessage": "(checked for every step)",
+    "description": "'Trigger from step' information for when unset",
+    "originalDefault": "(checked for every step)"
   },
   "KjDolH": {
     "defaultMessage": "Manually defined",
@@ -664,6 +694,11 @@
     "description": "Session expiry warning (in modal)",
     "originalDefault": "Your session is about to expire {delta}. Extend your session if you wish to continue."
   },
+  "OobRu3": {
+    "defaultMessage": "Advanced",
+    "description": "Advanced logic type",
+    "originalDefault": "Advanced"
+  },
   "OvqnXR": {
     "defaultMessage": "Yes",
     "description": "Component property boolean value \"true\"",
@@ -748,6 +783,11 @@
     "defaultMessage": "Initial value",
     "description": "Variable table initial value title",
     "originalDefault": "Initial value"
+  },
+  "RvJXSo": {
+    "defaultMessage": "change the value of a variable/component",
+    "description": "action type \"variable\" label",
+    "originalDefault": "change the value of a variable/component"
   },
   "S6eF5o": {
     "defaultMessage": "Data removal",
@@ -949,6 +989,11 @@
     "description": "Move up icon title",
     "originalDefault": "Move up"
   },
+  "c0dfYJ": {
+    "defaultMessage": "Build a JsonLogic expression using raw JSON.",
+    "description": "Advanced logic type info text",
+    "originalDefault": "Build a JsonLogic expression using raw JSON."
+  },
   "c1XyJ4": {
     "defaultMessage": "Component",
     "description": "Component variables tab title",
@@ -999,6 +1044,11 @@
     "description": "Export form button title",
     "originalDefault": "Export this form"
   },
+  "dWNClE": {
+    "defaultMessage": "Optional category for internal organisation.",
+    "description": "Form category field help text",
+    "originalDefault": "Optional category for internal organisation."
+  },
   "ddDA6+": {
     "defaultMessage": "Array",
     "description": "JSON variable type \"array\" representation",
@@ -1028,6 +1078,11 @@
     "defaultMessage": "Are you sure you want to delete this rule?",
     "description": "Price rule deletion confirm message",
     "originalDefault": "Are you sure you want to delete this rule?"
+  },
+  "eLDxD5": {
+    "defaultMessage": "Advanced options",
+    "description": "Logic rule advanced options icon title",
+    "originalDefault": "Advanced options"
   },
   "evbysh": {
     "defaultMessage": "Variable definition",
@@ -1179,6 +1234,11 @@
     "description": "Form list 'name' column header",
     "originalDefault": "Name"
   },
+  "k5JYxu": {
+    "defaultMessage": "Show form",
+    "description": "Show form button",
+    "originalDefault": "Show form"
+  },
   "k9CT3p": {
     "defaultMessage": "Whether to show a link to the main website on the confirmation page.",
     "description": "Display main website link help text",
@@ -1193,6 +1253,11 @@
     "defaultMessage": "disabled",
     "description": "component property \"disabled\" label",
     "originalDefault": "disabled"
+  },
+  "koVh3m": {
+    "defaultMessage": "Category",
+    "description": "Form category field label",
+    "originalDefault": "Category"
   },
   "l1fi1t": {
     "defaultMessage": "(missing information)",
@@ -1238,6 +1303,11 @@
     "defaultMessage": "Version",
     "description": "Camunda 'process definition version' label",
     "originalDefault": "Version"
+  },
+  "nHFMXn": {
+    "defaultMessage": "Trigger condition",
+    "description": "Logic trigger heading",
+    "originalDefault": "Trigger condition"
   },
   "naInSZ": {
     "defaultMessage": "Toggle DSL preview",
@@ -1359,6 +1429,11 @@
     "description": "Change form page title",
     "originalDefault": "Change form"
   },
+  "tRCXsR": {
+    "defaultMessage": "Select components and conditions using drop-downs to build a JsonLogic expression.",
+    "description": "Simple logic type info text",
+    "originalDefault": "Select components and conditions using drop-downs to build a JsonLogic expression."
+  },
   "tjRtQk": {
     "defaultMessage": "Submission confirmation email template",
     "description": "Submission confirmation email fieldset title",
@@ -1378,6 +1453,11 @@
     "defaultMessage": "Amount of days successful submissions of this form will remain before being removed. Leave blank to use value in General Configuration.",
     "description": "Successful Submissions Removal Limit help text",
     "originalDefault": "Amount of days successful submissions of this form will remain before being removed. Leave blank to use value in General Configuration."
+  },
+  "uiliGe": {
+    "defaultMessage": "The logic rules you set up here are executed in the order that they are defined. Please consult the <docs>manual</docs> for more information.",
+    "description": "Logic rules introduction/explanation",
+    "originalDefault": "The logic rules you set up here are executed in the order that they are defined. Please consult the <docs>manual</docs> for more information."
   },
   "ukFB7B": {
     "defaultMessage": "Select which authentication backend is automatically redirected to.",

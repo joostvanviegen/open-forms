@@ -1,3 +1,5 @@
+import logging
+
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -8,6 +10,8 @@ from zds_client import ClientError
 from openforms.plugins.exceptions import InvalidPluginConfiguration
 
 from .models import BAGConfig
+
+logger = logging.getLogger(__name__)
 
 
 class BAGClient:
@@ -35,6 +39,7 @@ class BAGClient:
         try:
             response = cls.make_request(client, data)
         except ClientError:
+            logger.exception("Could not retrieve address details from the BAG API")
             return {}
 
         if "_embedded" not in response:

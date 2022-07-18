@@ -1,6 +1,7 @@
 import logging
 import os
 from collections import OrderedDict
+from unittest import skip
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
@@ -10,25 +11,26 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from privates.test import temp_private_root
 from testfixtures import LogCapture
 
-from openforms.config.models import GlobalConfiguration
 from openforms.forms.tests.factories import (
     FormDefinitionFactory,
     FormFactory,
     FormStepFactory,
 )
 
-from ..models import Submission, SubmissionFileAttachment
+from ..models import Submission, SubmissionFileAttachment, SubmissionValueVariable
 from .factories import (
     SubmissionFactory,
     SubmissionFileAttachmentFactory,
     SubmissionStepFactory,
 )
+from .mixins import VariablesTestMixin
 
 
 @temp_private_root()
-class SubmissionTests(TestCase):
+class SubmissionTests(VariablesTestMixin, TestCase):
     maxDiff = None
 
+    @skip("Can't have duplicate keys with FormVariables")
     def test_get_merged_data(self):
         submission = SubmissionFactory.create()
         SubmissionStepFactory.create(
@@ -50,6 +52,7 @@ class SubmissionTests(TestCase):
             {"key1": "value1", "key2": "value-a", "key3": "value-b"},
         )
 
+    @skip("Can't have duplicate keys with FormVariables")
     def test_get_ordered_data_with_component_type_formio_formatters(self):
         form_definition = FormDefinitionFactory.create(
             configuration={
@@ -187,8 +190,16 @@ class SubmissionTests(TestCase):
         form_definition = FormDefinitionFactory.create(
             configuration={
                 "components": [
-                    {"key": "textFieldSensitive", "isSensitiveData": True},
-                    {"key": "textFieldNotSensitive", "isSensitiveData": False},
+                    {
+                        "key": "textFieldSensitive",
+                        "type": "textfield",
+                        "isSensitiveData": True,
+                    },
+                    {
+                        "key": "textFieldNotSensitive",
+                        "type": "textfield",
+                        "isSensitiveData": False,
+                    },
                     {"key": "sensitiveFile", "type": "file", "isSensitiveData": True},
                 ],
             }
@@ -196,8 +207,16 @@ class SubmissionTests(TestCase):
         form_definition_2 = FormDefinitionFactory.create(
             configuration={
                 "components": [
-                    {"key": "textFieldSensitive2", "isSensitiveData": True},
-                    {"key": "textFieldNotSensitive2", "isSensitiveData": False},
+                    {
+                        "key": "textFieldSensitive2",
+                        "type": "textfield",
+                        "isSensitiveData": True,
+                    },
+                    {
+                        "key": "textFieldNotSensitive2",
+                        "type": "textfield",
+                        "isSensitiveData": False,
+                    },
                 ],
             }
         )
@@ -239,11 +258,11 @@ class SubmissionTests(TestCase):
         submission_step.refresh_from_db()
         submission_step_2.refresh_from_db()
 
-        self.assertEqual(submission_step.data["textFieldSensitive"], "")
+        self.assertNotIn("textFieldSensitive", submission_step.data)
         self.assertEqual(
             submission_step.data["textFieldNotSensitive"], "this is not sensitive"
         )
-        self.assertEqual(submission_step_2.data["textFieldSensitive2"], "")
+        self.assertNotIn("textFieldSensitive2", submission_step_2.data)
         self.assertEqual(
             submission_step_2.data["textFieldNotSensitive2"], "this is not sensitive"
         )
@@ -365,16 +384,19 @@ class SubmissionTests(TestCase):
                 "components": [
                     {
                         "key": "product",
+                        "type": "textfield",
                         "appointments": {"showProducts": True},
                         "label": "Product",
                     },
                     {
                         "key": "location",
+                        "type": "textfield",
                         "appointments": {"showLocations": True},
                         "label": "Location",
                     },
                     {
                         "key": "time",
+                        "type": "textfield",
                         "appointments": {"showTimes": True},
                         "label": "Time",
                     },
@@ -387,21 +409,25 @@ class SubmissionTests(TestCase):
                 "components": [
                     {
                         "key": "lastName",
+                        "type": "textfield",
                         "appointments": {"lastName": True},
                         "label": "Last Name",
                     },
                     {
                         "key": "birthDate",
+                        "type": "date",
                         "appointments": {"birthDate": True},
                         "label": "Date of Birth",
                     },
                     {
                         "key": "phoneNumber",
+                        "type": "textfield",
                         "appointments": {"phoneNumber": True},
                         "label": "Phone Number",
                     },
                     {
                         "key": "randomAttribute",
+                        "type": "textfield",
                         "appointments": {"birthDate": False},
                         "label": "Random attribute",
                     },
@@ -575,3 +601,76 @@ class SubmissionTests(TestCase):
                 current_val = getattr(submission, attr)
                 self.assertNotEqual(current_val, original_value)
                 self.assertTrue(current_val.startswith("pbkdf2_sha256$"))
+
+    def test_submission_data_with_dotted_keys(self):
+        form_step = FormStepFactory.create(
+            form_definition__configuration={
+                "display": "form",
+                "components": [
+                    {"key": "person.name", "type": "textfield", "label": "Name"},
+                    {"key": "person.surname", "type": "textfield", "label": "Surname"},
+                    {
+                        "key": "person.pets",
+                        "type": "selectboxes",
+                        "label": "Pets",
+                        "values": [
+                            {"value": "cat", "label": "Cat"},
+                            {"value": "dog", "label": "Dog"},
+                            {"value": "bird", "label": "Bird"},
+                        ],
+                    },
+                ],
+            }
+        )
+        submission = SubmissionFactory.create(form=form_step.form)
+        SubmissionStepFactory.create(
+            submission=submission,
+            data={
+                "person": {
+                    "name": "Jo",
+                    "surname": "Doe",
+                    "pets": {
+                        "cat": True,
+                        "dog": False,
+                        "bird": False,
+                    },
+                }
+            },
+            form_step=form_step,
+        )
+
+        name_variable = SubmissionValueVariable.objects.get(
+            submission=submission, key="person.name"
+        )
+        surname_variable = SubmissionValueVariable.objects.get(
+            submission=submission, key="person.surname"
+        )
+        pet_variable = SubmissionValueVariable.objects.get(
+            submission=submission, key="person.pets"
+        )
+
+        self.assertEqual(name_variable.value, "Jo")
+        self.assertEqual(surname_variable.value, "Doe")
+        self.assertEqual(
+            pet_variable.value,
+            {
+                "cat": True,
+                "dog": False,
+                "bird": False,
+            },
+        )
+
+        self.assertEqual(
+            {
+                "person": {
+                    "name": "Jo",
+                    "surname": "Doe",
+                    "pets": {
+                        "cat": True,
+                        "dog": False,
+                        "bird": False,
+                    },
+                }
+            },
+            submission.data,
+        )

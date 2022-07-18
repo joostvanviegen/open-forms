@@ -28,9 +28,15 @@ class WebformBuilder extends WebformBuilderFormio {
     // which is inherited by all components and used in the builderInfo function.
     let changedComponentSchema = cloneDeep(this.schemas);
     for (const componentSchema in this.schemas) {
+      let value = defaultRequiredValue;
+      // Issue #1724 - Content components shouldn't be marked as required, since they take no input.
+      if (changedComponentSchema[componentSchema].type === 'content') {
+        value = false;
+      }
+
       changedComponentSchema[componentSchema].validate = {
         ...componentSchema.validate,
-        required: defaultRequiredValue,
+        required: value,
       };
     }
     this.schemas = changedComponentSchema;
@@ -114,8 +120,10 @@ class WebformBuilder extends WebformBuilderFormio {
       this.updateComponent(event.data.componentJson || event.data, event.changed);
     };
 
-    this.editForm.events._events['formio.change'][existingOnChangeHandlers.length - 1].fn =
-      modifiedOnChangeCallback;
+    if (existingOnChangeHandlers.length) {
+      this.editForm.events._events['formio.change'][existingOnChangeHandlers.length - 1].fn =
+        modifiedOnChangeCallback;
+    }
     return parentEditResult;
   }
 }

@@ -1,17 +1,15 @@
 from django.urls import reverse
 
 from django_webtest import WebTest
-from furl import furl
 from rest_framework.serializers import Serializer
 
 from openforms.accounts.tests.factories import SuperUserFactory
-from openforms.config.models import GlobalConfiguration
 from openforms.registrations.registry import Registry
-from openforms.registrations.tests.utils import patch_registry
 from openforms.tests.utils import disable_2fa
 
 from ...registrations.base import BasePlugin
 from ..models import Form
+from .admin.test_form import FormListAjaxMixin
 from .factories import FormFactory
 
 model_field = Form._meta.get_field("registration_backend")
@@ -36,7 +34,7 @@ class Plugin(BasePlugin):
 
 
 @disable_2fa
-class FormAdminTests(WebTest):
+class FormAdminTests(FormListAjaxMixin, WebTest):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -46,25 +44,23 @@ class FormAdminTests(WebTest):
         form_available = FormFactory.create(deleted_=False)
         form_deleted = FormFactory.create(deleted_=True)
 
-        url = reverse("admin:forms_form_changelist")
-
         with self.subTest("default"):
-            response = self.app.get(url, user=self.superuser, status=200)
+            response = self._get_form_changelist(user=self.superuser, status=200)
             visible = list(response.context["cl"].result_list.all())
             self.assertEqual(visible, [form_available])
 
         with self.subTest("available"):
-            f = furl(url)
-            f.args["deleted"] = "available"
-            response = self.app.get(f.url, user=self.superuser, status=200)
+            response = self._get_form_changelist(
+                query={"deleted": "available"}, user=self.superuser, status=200
+            )
 
             visible = list(response.context["cl"].result_list.all())
             self.assertEqual(visible, [form_available])
 
         with self.subTest("deleted"):
-            f = furl(url)
-            f.args["deleted"] = "deleted"
-            response = self.app.get(f.url, user=self.superuser, status=200)
+            response = self._get_form_changelist(
+                query={"deleted": "deleted"}, user=self.superuser, status=200
+            )
 
             visible = list(response.context["cl"].result_list.all())
             self.assertEqual(visible, [form_deleted])
@@ -73,8 +69,7 @@ class FormAdminTests(WebTest):
         form_delete = FormFactory.create()
         form_keep = FormFactory.create()
 
-        url = reverse("admin:forms_form_changelist")
-        response = self.app.get(url, user=self.superuser, status=200)
+        response = self._get_form_changelist(user=self.superuser, status=200)
 
         form = response.forms["changelist-form"]
         form["action"] = "delete_selected"

@@ -110,8 +110,9 @@ class PrefillHookTests(TransactionTestCase):
     def test_complex_components(self):
         def config_factory():
             components = deepcopy(CONFIGURATION["components"])
-            for comp in components:
+            for index, comp in enumerate(components):
                 comp["id"] = get_random_string(length=7)
+                comp["key"] = comp["key"] + get_random_string(length=4)
             return components
 
         complex_configuration = {
@@ -402,7 +403,7 @@ class PrefillHookTests(TransactionTestCase):
             "display": "form",
             "components": [
                 {
-                    "id": "one",
+                    "key": "one",
                     "type": "text",
                     "prefill": {
                         "plugin": "have",
@@ -411,7 +412,7 @@ class PrefillHookTests(TransactionTestCase):
                     "defaultValue": "",
                 },
                 {
-                    "id": "two",
+                    "key": "two",
                     "type": "text",
                     "prefill": {
                         "plugin": "have",
@@ -471,7 +472,7 @@ class PrefillHookTests(TransactionTestCase):
             "display": "form",
             "components": [
                 {
-                    "id": "one1",
+                    "key": "one1",
                     "type": "text",
                     "prefill": {
                         "plugin": "alpha",
@@ -480,7 +481,7 @@ class PrefillHookTests(TransactionTestCase):
                     "defaultValue": "",
                 },
                 {
-                    "id": "one2",
+                    "key": "one2",
                     "type": "text",
                     "prefill": {
                         "plugin": "bravo",
@@ -496,7 +497,7 @@ class PrefillHookTests(TransactionTestCase):
             "display": "form",
             "components": [
                 {
-                    "id": "two1",
+                    "key": "two1",
                     "type": "text",
                     "prefill": {
                         "plugin": "alpha",
@@ -505,7 +506,7 @@ class PrefillHookTests(TransactionTestCase):
                     "defaultValue": "",
                 },
                 {
-                    "id": "two2",
+                    "key": "two2",
                     "type": "text",
                     "prefill": {
                         "plugin": "bravo",
@@ -515,7 +516,7 @@ class PrefillHookTests(TransactionTestCase):
                 },
                 # also add a recurring prefill attribute from step one
                 {
-                    "id": "two2",
+                    "key": "two3",
                     "type": "text",
                     "prefill": {
                         "plugin": "alpha",
@@ -619,3 +620,43 @@ class PrefillHookTests(TransactionTestCase):
         # (recurring from step one)
         field = new_configuration_two["components"][2]
         self.assertEqual(field["defaultValue"], "alpha_one_value")
+
+    def test_value_is_normalized(self):
+        """
+        Regression integration test for #1693.
+
+        Ensure that values retrieved from prefill plugins are normalized according
+        to the postal code inputMask.
+        """
+        configuration = {
+            "components": [
+                {
+                    "type": "postcode",
+                    "key": "postcode",
+                    "inputMask": "9999 AA",
+                    "prefill": {
+                        "plugin": "postcode",
+                        "attribute": "static",
+                    },
+                    "defaultValue": "",
+                }
+            ]
+        }
+
+        form_step = FormStepFactory.create(form_definition__configuration=configuration)
+        submission = SubmissionFactory.create(form=form_step.form)
+
+        register = Registry()
+
+        @register("postcode")
+        class HavePlugin(DemoPrefill):
+            @staticmethod
+            def get_prefill_values(submission, attributes):
+                return {"static": "1015CJ"}
+
+        new_configuration = apply_prefill(
+            configuration=configuration, submission=submission, register=register
+        )
+
+        field = new_configuration["components"][0]
+        self.assertEqual(field["defaultValue"], "1015 CJ")

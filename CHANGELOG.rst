@@ -2,6 +2,124 @@
 Changelog
 =========
 
+1.2.0 (2022-??-??) - in development
+===================================
+
+BEFORE upgrading to 1.2.x, please read the release notes carefully.
+
+**Changes**
+
+TODO
+
+* ...
+
+.. warning:: Manual intervention required
+
+   With the introduction of variables, it is no longer allowed to have duplicate keys
+   within a single form. The UI already warned about this, this warning has now become
+   an error and will prevent the upgrade from succeeding.
+
+   If you are upgrading from an older version, you should check for duplicate component
+   keys on the old version before upgrading to 1.2.0. You can do this by running the
+   appropriate management command in the container:
+
+   .. code-block:: bash
+
+       python src/manage.py check_duplicate_component_keys
+
+   This command scans all your forms for duplicate keys and will report which forms
+   have which duplicate keys. You must manually resolve this before upgrading.
+
+   If there are no duplicate keys found (anymore), you can proceed.
+
+   Note that you must be at least on 1.1.4 or 1.0.12 (unreleased) for this management
+   command to be available. If you are on an older version, please update to the latest
+   patch version first.
+
+1.1.3 (2022-07-01)
+==================
+
+Periodic bugfix release
+
+* [#1681] Use a unique reference number every time for StUF-ZDS requests
+* [#1687] Added explicit submission step validate endpoint
+* Fixed unintended camelization of response data
+* Bumped API version to 1.1.1
+* [#1693] Fixed postcode validation errors by applying input mask normalization to prefill values
+* [#1731] Fixed crash with non-latin1 characters in StUF-calls (such as StUF-ZDS)
+
+1.0.11 (2022-06-29)
+===================
+
+Periodic bugfix release
+
+* [#1681] Use a unique reference number every time for StUF-ZDS requests
+* [#1687] Added explicit submission step validate endpoint
+* Fixed unintended camelization of response data
+* Bumped API version to 1.0.2
+* [#1693] Fixed postcode validation errors by applying input mask normalization to
+  prefill values
+* [#1731] Fixed crash with non-latin1 characters in StUF-calls (such as StUF-ZDS)
+
+1.1.2 (2022-06-16)
+==================
+
+Hotfix following 1.1.1
+
+The patch validating uploaded file content types did not anticipate the explicit
+wildcard configuration option in Formio to allow all file types. This caused files
+uploaded by end-users to not be attached to the submission.
+
+We've fixed the wildcard behaviour, but you should check your instances for incomplete
+data. This involves a couple of steps with some pointers below.
+
+1. The temporary uploads are automatically removed by the cronjobs at 3:30 UTC. The
+   default setting is to do this after 2 days (48 hours). We have provided an example
+   `management command <https://github.com/open-formulieren/open-forms/blob/issue/recover-missing-submission-attachments/src/openforms/utils/management/commands/check_restore_needed.py>`_ that you can use to check if you need to partially
+   restore backups. Make sure to tweak the ``WINDOW_START`` and ``WINDOW_END`` variables
+   to your specific situation - the start would be when you started deploying version
+   1.0.9, and the end would be ``most recent 3:30 minus 48 hours``.
+
+2. If you need to do partial restores, you should recover the records from the
+   ``submissions_temporaryfileupload`` database table where the ``created_on`` timestamp
+   lies in your interval. Additionally, you need to recover the file uploads of those
+   relevant records. The paths are given by the column ``content``. You find those files
+   in the ``private_media`` directory.
+
+3. Finally, you can run the management command ``recover_missing_attachments``, which
+   will report any issues and print out the references and IDs of the affected
+   submissions.
+
+1.0.10 (2022-06-16)
+===================
+
+Hotfix following 1.0.9 - this is the same patch as 1.1.2.
+
+1.1.1 (2022-06-13)
+==================
+
+Security release (CVE-2022-31040, CVE-2022-31041)
+
+This bugfix release fixes two security issues in Open Forms. We recommend upgrading
+as soon as possible.
+
+* [CVE-2022-31040] Fixed open redirect in cookie-consent 'close' button
+* [CVE-2022-31041] Perform upload content validation against allowed file types
+* [#1670] Update error message for number validation
+
+1.0.9 (2022-06-13)
+==================
+
+Security release (CVE-2022-31040, CVE-2022-31041)
+
+This bugfix release fixes two security issues in Open Forms. We recommend upgrading
+as soon as possible.
+
+* [CVE-2022-31040] Fixed open redirect in cookie-consent 'close' button
+* [CVE-2022-31041] Perform upload content validation against allowed file types
+* [#1670] Update error message for number validation
+* [#1560] Fix prefill not working inside of nested/layout components
+
 1.1.0 (2022-05-24)
 ==================
 

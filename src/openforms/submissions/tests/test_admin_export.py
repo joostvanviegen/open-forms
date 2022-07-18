@@ -13,9 +13,10 @@ from openforms.submissions.tests.factories import (
     SubmissionFactory,
     SubmissionStepFactory,
 )
+from openforms.submissions.tests.mixins import VariablesTestMixin
 
 
-class TestSubmissionExportAdmin(WebTest):
+class TestSubmissionExportAdmin(VariablesTestMixin, WebTest):
     @classmethod
     def setUpTestData(cls):
         form_definition = FormDefinitionFactory(
@@ -51,9 +52,9 @@ class TestSubmissionExportAdmin(WebTest):
                 "multi_str": ["aaa", "bbb"],
                 "my_file": [
                     {
-                        "url": f"http://server/api/v1/submissions/files/uuid-uuid-uuid",
+                        "url": "http://server/api/v1/submissions/files/uuid-uuid-uuid",
                         "data": {
-                            "url": f"http://server/api/v1/submissions/files/uuid-uuid-uuid",
+                            "url": "http://server/api/v1/submissions/files/uuid-uuid-uuid",
                             "form": "",
                             "name": "my-image.jpg",
                             "size": 46114,

@@ -8,11 +8,11 @@ from rest_framework.test import APITestCase
 
 from openforms.accounts.tests.factories import StaffUserFactory, UserFactory
 
-from ...submissions.tests.form_logic.factories import FormLogicFactory
 from ..models import FormDefinition, FormLogic, FormStep, FormVersion
 from .factories import (
     FormDefinitionFactory,
     FormFactory,
+    FormLogicFactory,
     FormStepFactory,
     FormVersionFactory,
 )
@@ -187,6 +187,6 @@ class FormVersionRestoreAPITests(APITestCase):
         )
         self.assertEqual("test-definition-1", restored_form_definition.slug)
         self.assertEqual(
-            {"components": [{"key": "test", "test": "1"}]},
+            {"components": [{"key": "test", "test": "1", "type": "textfield"}]},
             restored_form_definition.configuration,
         )

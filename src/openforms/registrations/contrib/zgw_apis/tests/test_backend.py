@@ -1,4 +1,3 @@
-from datetime import date
 from decimal import Decimal
 
 from django.test import TestCase
@@ -15,6 +14,7 @@ from openforms.submissions.tests.factories import (
     SubmissionFactory,
     SubmissionFileAttachmentFactory,
 )
+from openforms.submissions.tests.mixins import VariablesTestMixin
 
 from ....constants import RegistrationAttribute
 from ....service import extract_submission_reference
@@ -24,7 +24,7 @@ from .factories import ZgwConfigFactory
 
 @temp_private_root()
 @requests_mock.Mocker(real_http=False)
-class ZGWBackendTests(TestCase):
+class ZGWBackendTests(VariablesTestMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
         ZgwConfigFactory.create(
@@ -158,30 +158,35 @@ class ZGWBackendTests(TestCase):
             [
                 {
                     "key": "voornaam",
+                    "type": "textfield",
                     "registration": {
                         "attribute": RegistrationAttribute.initiator_voornamen,
                     },
                 },
                 {
                     "key": "achternaam",
+                    "type": "textfield",
                     "registration": {
                         "attribute": RegistrationAttribute.initiator_geslachtsnaam,
                     },
                 },
                 {
                     "key": "tussenvoegsel",
+                    "type": "textfield",
                     "registration": {
                         "attribute": RegistrationAttribute.initiator_tussenvoegsel,
                     },
                 },
                 {
                     "key": "geboortedatum",
+                    "type": "date",
                     "registration": {
                         "attribute": RegistrationAttribute.initiator_geboortedatum,
                     },
                 },
                 {
                     "key": "coordinaat",
+                    "type": "map",
                     "registration": {
                         "attribute": RegistrationAttribute.locatie_coordinaat,
                     },
@@ -464,12 +469,12 @@ class ZGWBackendTests(TestCase):
             vertrouwelijkheidaanduiding="openbaar",
         )
 
-        attachment1 = SubmissionFileAttachmentFactory.create(
+        SubmissionFileAttachmentFactory.create(
             submission_step=SubmissionStep.objects.first(),
             file_name="attachment1.jpg",
             form_key="field1",
         )
-        attachment2 = SubmissionFileAttachmentFactory.create(
+        SubmissionFileAttachmentFactory.create(
             submission_step=SubmissionStep.objects.first(),
             file_name="attachment2.jpg",
             form_key="field2",
@@ -478,7 +483,7 @@ class ZGWBackendTests(TestCase):
         self.install_mocks(m)
 
         plugin = ZGWRegistration("zgw")
-        result = plugin.register_submission(submission, zgw_form_options)
+        plugin.register_submission(submission, zgw_form_options)
 
         document_create_attachment1 = m.request_history[-2]
         document_create_attachment2 = m.request_history[-4]

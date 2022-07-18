@@ -20,9 +20,16 @@
 @import './logic-rule';
 @import './logic-trigger';
 @import './logic-action';
+@import './logic-type-selection';
+
+// form list
+@import './form-category';
 
 // re-implementation of django admin changelist in React
 @import './changelist';
 
 // third party
 @import './ReactModal';
+
+// Submission logs
+@import './logic-evaluated-table';
