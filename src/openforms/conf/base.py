@@ -65,7 +65,7 @@ DATABASES = {
         "USER": config("DB_USER", "openforms"),
         "PASSWORD": config("DB_PASSWORD", "openforms"),
         "HOST": config("DB_HOST", "localhost"),
-        "PORT": config("DB_PORT", 5432),
+        "PORT": config("DB_PORT", 54322),
     }
 }
 
@@ -463,7 +463,7 @@ LOGOUT_REDIRECT_URL = reverse_lazy("admin:index")
 #
 # SECURITY settings
 #
-SESSION_COOKIE_SECURE = IS_HTTPS
+SESSION_COOKIE_SECURE = False
 SESSION_COOKIE_HTTPONLY = True
 # set same-site attribute to None to allow emdedding the SDK for making cross domain
 # requests.
@@ -471,7 +471,7 @@ SESSION_COOKIE_SAMESITE = config(
     "SESSION_COOKIE_SAMESITE", default="None" if IS_HTTPS else "Lax"
 )
 
-CSRF_COOKIE_SECURE = IS_HTTPS
+CSRF_COOKIE_SECURE = False
 
 X_FRAME_OPTIONS = "DENY"
 

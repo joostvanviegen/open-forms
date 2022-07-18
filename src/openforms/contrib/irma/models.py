@@ -5,8 +5,6 @@ from django.utils.translation import gettext_lazy as _
 from solo.models import SingletonModel
 from zgw_consumers.constants import APITypes
 
-from .client import IrmaClient
-
 
 class IrmaConfigManager(models.Manager):
     def get_queryset(self):
@@ -27,17 +25,10 @@ class IrmaConfig(SingletonModel):
     class Meta:
         verbose_name = _("Irma configuration")
     
-    def __str__(self):
-        return force_str(self._meta.verbose_name)
+    #def __str__(self):
+    #    return force_str(self._meta.verbose_name)
 
-    def get_client(self) -> IrmaClient:
-        if not self.irma_service:
-            raise RuntimeError("You must configure an Irma service!")
-
-        default_client = self.irma_service.build_client()
-        irma_client = IrmaClient(
-            service=default_client.service,
-            base_path=default_client.base_path,
-        )
-        irma_client.auth_value = default_client.auth_header
-        return irma_client
+    @property
+    def service(self):
+        s = self._service
+        return s
