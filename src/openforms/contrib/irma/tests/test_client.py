@@ -12,11 +12,17 @@ class IrmaClientTestCase(IrmaTestMixin, TestCase):
         #@request_mock.Mocker()
         def test_startSession(self):
             client = IrmaClient()
-            res = client.startSession()
-
-            print(res)
+            res = client.start_session()
 
             self.assertIsNotNone(res)
             self.assertIsNotNone(res.json()["sessionPtr"])
             self.assertIsNotNone(res.json()["token"])
-            #self.assertIsNotNone(res["frontEn"])
+
+        def test_getSessionStatus(self):
+            client = IrmaClient()
+            client.start_session()
+            res = client.check_session_status()
+            print(res)
+
+            self.assertIsNotNone(res)
+            self.assertJSONEqual(res, {"status": "INITIALIZED"})

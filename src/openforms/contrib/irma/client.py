@@ -13,18 +13,26 @@ class IrmaClientError(Exception):
     pass
 
 class IrmaClient:
-    @elasticapm.capture_span("app.irma")
-    def startSession(self, **query_params):
-        config = IrmaConfig.get_solo()
-        config._service = ServiceFactory(
-            api_root="http://10.1.0.134:8088",
+    session_ptr = {"url": '', "qr": ''}
+    token = None
+    root_url = "http://10.1.0.134:8088"
+    config = None
+
+    def config_session(self):
+        self.config = IrmaConfig.get_solo()
+        self.config._service = ServiceFactory(
+            api_root=self.root_url,
             oas="http://localhost/irma_openapi.yaml"
         )
-        print(config._service)
-        if not config._service:
+        print(self.config._service)
+        if not self.config._service:
             logger.warning("no service defined for Irma client")
             raise IrmaClientError("no service defined")
-        
+
+    @elasticapm.capture_span("app.irma")
+    def start_session(self, **query_params): 
+        if(self.config is None):
+            self.config_session()
         results = None
         try:
             session = Session()
@@ -48,7 +56,7 @@ class IrmaClient:
                       ]
                     ]
                 })
-            url = config._service.api_root + "session"
+            url = self.config._service.api_root + "session"
             request = Request('POST', url, data=data)
             prepped = request.prepare()
 
@@ -59,15 +67,33 @@ class IrmaClient:
         except RequestException as e:
             logger.exception("exception while making Irma request", exc_info=e)
             return {}
+        self.session_ptr["url"] = results.json()["sessionPtr"]["u"]
+        self.session_ptr["qr"] = results.json()["sessionPtr"]["irmaqr"]
+        self.token = results.json()["token"]
 
-        #values = dict()
-        #for attr in results:
-        #    try:
-        #        values[attr] = glom(data, attr)
-        #    except GlomError:
-        #        logger.warning(
-        #            f"missing expected attribute '{attr}' in backend response"
-        #    )
+        return results
+  
+    @elasticapm.capture_span("app.irma")
+    def check_session_status(self, **query_params):
+        print(self.session_ptr["url"])
+        if(self.config is None):
+            self.config_session()
+        results = None
+        try:
+            session = Session()
+
+            url = self.config._service.api_root + "session/" + self.token + "/status"
+            request = Request('get', url)
+            prepped = request.prepare()
+
+            prepped.headers['Content-Type'] = 'application/json'
+            
+            results = session.send(prepped)
+
+        except RequestException as e:
+            logger.exception("exception while making Irma request", exc_info=e)
+            return {}
+
         return results
 
     #def endSession(self, **query_params):
