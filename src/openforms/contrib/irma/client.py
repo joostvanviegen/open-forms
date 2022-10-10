@@ -4,8 +4,10 @@ import logging
 from requests import RequestException, Request, Session
 import elasticapm
 import json
+import factory
+from zgw_consumers.models import Service
 from openforms.contrib.irma.models import IrmaConfig
-from openforms.registrations.contrib.zgw_apis.tests.factories import ServiceFactory
+#from openforms.registrations.contrib.zgw_apis.tests.factories import ServiceFactory
 
 logger = logging.getLogger(__name__)
 
@@ -112,3 +114,7 @@ class IrmaClient:
     #                data=**query_params.data
     #            )
     #    }
+
+class ServiceFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model=Service

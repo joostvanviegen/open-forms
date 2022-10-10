@@ -25,4 +25,4 @@ class IrmaClientTestCase(IrmaTestMixin, TestCase):
             print(res)
 
             self.assertIsNotNone(res)
-            self.assertJSONEqual(res, {"status": "INITIALIZED"})
+            self.assertEqual(res.json(), "INITIALIZED")

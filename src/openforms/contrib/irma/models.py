@@ -31,4 +31,5 @@ class IrmaConfig(SingletonModel):
     @property
     def service(self):
         s = self._service
+        s.api_root = "http://localhost:8088"
         return s
